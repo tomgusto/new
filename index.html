@@ -942,15 +942,10 @@
         return (!earliest || new Date(current.data) < new Date(earliest.data)) ? current : earliest;
       }, null);
       
-      // Get current counts without incrementing yet
+      // Get current counts and increment them for this session
       const currentCounts = getWorkoutCounts();
-      
-      // Check if there are any previous sessions (excluding the current one)
-      const hasPreviousSessions = historicoSessoes.some(s => s.isSessionEnd && s.sessionId !== currentSessionId);
-      
-      // For the first session, use 1, otherwise increment the count
-      const weeklyCount = hasPreviousSessions ? (currentCounts.weeklyCount + 1) : 1;
-      const monthlyCount = hasPreviousSessions ? (currentCounts.monthlyCount + 1) : 1;
+      const weeklyCount = Math.max(1, currentCounts.weeklyCount + 1);
+      const monthlyCount = Math.max(1, currentCounts.monthlyCount + 1);
       
       // Create session end marker with historical counts
       const now = new Date();
@@ -1732,24 +1727,29 @@
       startOfWeek.setDate(referenceDate.getDate() - referenceDate.getDay());
       startOfWeek.setHours(0, 0, 0, 0);
       
+      // Get end of week (next Saturday) for the reference date
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+      
       // Get start of month for the reference date
       const startOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
       
-      // Get end of day for the reference date
-      const endOfDay = new Date(referenceDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Get end of month for the reference date
+      const endOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
       
       // Filter sessions for the week and month of the reference date
       const weekSessions = historicoSessoes.filter(sessao => {
         if (!sessao.isSessionEnd) return false;
         const sessaoDate = new Date(sessao.data);
-        return sessaoDate >= startOfWeek && sessaoDate <= endOfDay;
+        return sessaoDate >= startOfWeek && sessaoDate <= endOfWeek;
       });
       
       const monthSessions = historicoSessoes.filter(sessao => {
         if (!sessao.isSessionEnd) return false;
         const sessaoDate = new Date(sessao.data);
-        return sessaoDate >= startOfMonth && sessaoDate <= endOfDay;
+        return sessaoDate >= startOfMonth && sessaoDate <= endOfMonth;
       });
       
       // Count unique session IDs
@@ -1757,8 +1757,8 @@
       const monthlyCount = new Set(monthSessions.map(s => s.sessionId)).size;
       
       return { 
-        weeklyCount: Math.max(1, weeklyCount), // Ensure at least 1
-        monthlyCount: Math.max(1, monthlyCount) // Ensure at least 1
+        weeklyCount: weeklyCount,
+        monthlyCount: monthlyCount
       };
     }
     
