@@ -1709,11 +1709,25 @@
     function removerSessao(index) {
       if (!confirm('Tem certeza que deseja excluir esta sessão?')) return;
       
-      const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes")) || [];
+      const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
       if (index >= 0 && index < historicoSessoes.length) {
-        historicoSessoes.splice(index, 1);
-        localStorage.setItem("historicoSessoes", JSON.stringify(historicoSessoes));
+        const sessionToRemove = historicoSessoes[index];
+        const sessionIdToRemove = sessionToRemove.sessionId;
+        
+        // Remove all entries with this sessionId (both exercises and session end marker)
+        const updatedHistorico = historicoSessoes.filter(session => {
+          // Keep sessions that don't match the ID, or don't have an ID (legacy support)
+          return !session.sessionId || session.sessionId !== sessionIdToRemove;
+        });
+        
+        // Save the updated history
+        localStorage.setItem("historicoSessoes", JSON.stringify(updatedHistorico));
+        
+        // Update the display
         exibirHistoricoSessoes();
+        
+        // Show success message
+        mostrarMensagem('Sessão removida com sucesso!', 'success');
       }
     }
     
