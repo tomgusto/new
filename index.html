@@ -942,13 +942,15 @@
         return (!earliest || new Date(current.data) < new Date(earliest.data)) ? current : earliest;
       }, null);
       
-      // Get current counts and increment them for this session
-      const currentCounts = getWorkoutCounts();
-      const weeklyCount = Math.max(1, currentCounts.weeklyCount + 1);
-      const monthlyCount = Math.max(1, currentCounts.monthlyCount + 1);
+      // Get current counts using the session's date for accurate weekly/monthly counting
+      const now = new Date();
+      const currentCounts = getWorkoutCounts(now);
+      
+      // For the first session of the week/month, use 1, otherwise increment the count
+      const weeklyCount = currentCounts.weeklyCount === 0 ? 1 : currentCounts.weeklyCount + 1;
+      const monthlyCount = currentCounts.monthlyCount === 0 ? 1 : currentCounts.monthlyCount + 1;
       
       // Create session end marker with historical counts
-      const now = new Date();
       const sessionEndMarker = {
         isSessionEnd: true,
         sessionId: currentSessionId,
@@ -1142,7 +1144,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-weight: 500;">${hora} - ${exercicioNome}</span>
                   <button 
-                    onclick="removerSessao(${sessao.originalIndex})" 
+                    onclick="removerExercicio(${sessao.originalIndex})" 
                     style="
                       background: #ff4d4f; 
                       color: white; 
@@ -1162,7 +1164,7 @@
                     "
                     onmouseover="this.style.backgroundColor='#ff7875'"
                     onmouseout="this.style.backgroundColor='#ff4d4f'"
-                    title="Excluir"
+                    title="Excluir exercício"
                   >
                     ×
                   </button>
@@ -1706,6 +1708,56 @@
       exibirHistoricoSessoes();
     }
 
+    function removerExercicio(index) {
+      const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
+      if (index >= 0 && index < historicoSessoes.length) {
+        const exerciseToRemove = historicoSessoes[index];
+        const sessionId = exerciseToRemove.sessionId;
+        
+        if (!sessionId) {
+          // If no session ID, just remove the exercise
+          if (!confirm('Tem certeza que deseja excluir este exercício?')) return;
+          historicoSessoes.splice(index, 1);
+        } else {
+          // Find all exercises in this session
+          const sessionExercises = historicoSessoes.filter(s => s.sessionId === sessionId && !s.isSessionEnd);
+          
+          if (sessionExercises.length <= 1) {
+            // If this is the last exercise, show special message and remove the entire session
+            if (!confirm('Este é o último exercício da sessão. Toda a sessão será deletada junto.')) return;
+            
+            // Remove all entries with this sessionId
+            const updatedHistorico = historicoSessoes.filter(session => {
+              return !session.sessionId || session.sessionId !== sessionId;
+            });
+            
+            // Save the updated history
+            localStorage.setItem("historicoSessoes", JSON.stringify(updatedHistorico));
+            
+            // Update the display
+            exibirHistoricoSessoes();
+            
+            // Show success message
+            mostrarMensagem('Sessão removida com sucesso!', 'success');
+            return;
+          } else {
+            // Remove just this exercise
+            if (!confirm('Tem certeza que deseja excluir este exercício?')) return;
+            historicoSessoes.splice(index, 1);
+          }
+        }
+        
+        // Save the updated history
+        localStorage.setItem("historicoSessoes", JSON.stringify(historicoSessoes));
+        
+        // Update the display
+        exibirHistoricoSessoes();
+        
+        // Show success message
+        mostrarMensagem('Exercício removido com sucesso!', 'success');
+      }
+    }
+    
     function removerSessao(index) {
       if (!confirm('Tem certeza que deseja excluir esta sessão?')) return;
       
@@ -1753,12 +1805,17 @@
       const endOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0);
       endOfMonth.setHours(23, 59, 59, 999);
       
-      // Filter sessions for the week and month of the reference date
+      // Filter sessions for the current calendar week (Sunday to Saturday)
       const weekSessions = historicoSessoes.filter(sessao => {
         if (!sessao.isSessionEnd) return false;
         const sessaoDate = new Date(sessao.data);
+        // Only include sessions from the current calendar week (Sunday to Saturday)
         return sessaoDate >= startOfWeek && sessaoDate <= endOfWeek;
       });
+      
+      // Debug: Log the dates being used for weekly filtering
+      console.log('Weekly range:', startOfWeek.toLocaleString(), 'to', endOfWeek.toLocaleString());
+      console.log('Sessions in week:', weekSessions.length);
       
       const monthSessions = historicoSessoes.filter(sessao => {
         if (!sessao.isSessionEnd) return false;
