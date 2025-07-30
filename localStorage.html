@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Manager - Visualizador de Dados</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .key-item {
+            cursor: pointer;
+            padding: 10px;
+            margin-bottom: 5px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .key-item:hover {
+            background-color: #e9ecef;
+        }
+        .json-viewer {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 100px;
+        }
+        
+        #edit-json-content {
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 300px;
+            resize: vertical;
+        }
+        
+        .modal-body {
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+        .actions {
+            margin-bottom: 20px;
+        }
+        .storage-info {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">Workout Manager - Visualizador de Dados</h1>
+            <a href="index.html" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Voltar ao Aplicativo
+            </a>
+        </div>
+        
+        <div class="storage-info alert alert-info">
+            <i class="fas fa-database me-2"></i>
+            <span id="storage-usage">Carregando informações de armazenamento...</span>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Chaves no localStorage</span>
+                        <button id="refresh-btn" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="key-list" class="list-group list-group-flush">
+                            <!-- Keys will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="actions mt-3">
+                    <h5>Ações</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button id="export-json" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-file-export me-1"></i> Exportar Tudo
+                        </button>
+                        <label class="btn btn-outline-success btn-sm mb-0" style="cursor: pointer;">
+                            <i class="fas fa-file-import me-1"></i> Importar JSON
+                            <input type="file" id="import-json" accept=".json" style="display: none;">
+                        </label>
+                        <button id="clear-storage" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-trash-alt me-1"></i> Limpar Tudo
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Valor</span>
+                        <div>
+                            <button id="copy-json" class="btn btn-sm btn-outline-secondary me-2" disabled>
+                                <i class="far fa-copy me-1"></i> Copiar
+                            </button>
+                            <button id="download-json" class="btn btn-sm btn-outline-primary me-2" disabled>
+                                <i class="fas fa-download me-1"></i> Baixar
+                            </button>
+                            <button id="edit-json" class="btn btn-sm btn-outline-warning" disabled>
+                                <i class="fas fa-edit me-1"></i> Editar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="json-viewer" class="json-viewer">
+                            <div class="text-muted p-3 text-center">
+                                Selecione uma chave para visualizar seu conteúdo
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar: <span id="edit-key-title"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="edit-json-container" class="mb-3">
+                        <textarea id="edit-json-content" class="form-control font-monospace" rows="15" style="font-size: 0.9rem;"></textarea>
+                        <div id="json-error" class="invalid-feedback">
+                            JSON inválido. Por favor, verifique a formatação.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="save-json">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const keyList = document.getElementById('key-list');
+            const jsonViewer = document.getElementById('json-viewer');
+            const refreshBtn = document.getElementById('refresh-btn');
+            const copyBtn = document.getElementById('copy-json');
+            const downloadBtn = document.getElementById('download-json');
+            const editBtn = document.getElementById('edit-json');
+            const exportBtn = document.getElementById('export-json');
+            const clearBtn = document.getElementById('clear-storage');
+            const storageUsage = document.getElementById('storage-usage');
+            const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            const editJsonContent = document.getElementById('edit-json-content');
+            const editKeyTitle = document.getElementById('edit-key-title');
+            const saveJsonBtn = document.getElementById('save-json');
+            const jsonError = document.getElementById('json-error');
+            
+            let selectedKey = null;
+            
+            // Update storage usage
+            function updateStorageUsage() {
+                let total = 0;
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = localStorage.getItem(key);
+                    if (key && value) {
+                        total += key.length + value.length * 2; // *2 for UTF-16
+                    }
+                }
+                const usageKB = (total / 1024).toFixed(2);
+                storageUsage.innerHTML = `
+                    <strong>Uso de armazenamento:</strong> ${usageKB} KB
+                    <span class="text-muted">(${localStorage.length} ${localStorage.length === 1 ? 'item' : 'itens'})</span>
+                `;
+            }
+            
+            // Format JSON with syntax highlighting
+            function syntaxHighlight(json) {
+                if (!json) return '';
+                
+                if (typeof json !== 'string') {
+                    json = JSON.stringify(json, null, 2);
+                }
+                
+                return json
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(\.\d*)?([eE][+\-]?\d+)?)/g, 
+                    function (match) {
+                        let cls = 'text-primary';
+                        if (/^"/.test(match)) {
+                            if (/:$/.test(match)) {
+                                cls = 'text-danger';
+                            } else {
+                                cls = 'text-success';
+                            }
+                        } else if (/true|false/.test(match)) {
+                            cls = 'text-warning';
+                        } else if (/null/.test(match)) {
+                            cls = 'text-info';
+                        }
+                        return '<span class="' + cls + '">' + match + '</span>';
+                    });
+            }
+            
+            // Parse JSON safely
+            function safeJsonParse(str) {
+                try {
+                    return JSON.parse(str);
+                } catch (e) {
+                    return str;
+                }
+            }
+            
+            // Display the value of the selected key
+            function displayKeyValue(key) {
+                selectedKey = key;
+                const value = localStorage.getItem(key);
+                let parsedValue;
+                
+                try {
+                    parsedValue = JSON.parse(value);
+                    jsonViewer.innerHTML = syntaxHighlight(parsedValue);
+                } catch (e) {
+                    jsonViewer.textContent = value || '(vazio)';
+                }
+                
+                // Update UI
+                document.querySelectorAll('.key-item').forEach(el => {
+                    el.classList.remove('active');
+                    if (el.dataset.key === key) {
+                        el.classList.add('active');
+                    }
+                });
+                
+                copyBtn.disabled = false;
+                downloadBtn.disabled = false;
+                editBtn.disabled = false;
+            }
+            
+            // List all keys in localStorage
+            function listKeys() {
+                keyList.innerHTML = '';
+                
+                if (localStorage.length === 0) {
+                    keyList.innerHTML = `
+                        <div class="p-3 text-muted text-center">
+                            Nenhuma chave encontrada no localStorage
+                        </div>
+                    `;
+                    return;
+                }
+                
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const item = document.createElement('div');
+                    item.className = 'key-item';
+                    item.dataset.key = key;
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-key me-2"></i> ${key}</span>
+                            <span class="badge bg-secondary">${localStorage.getItem(key).length} chars</span>
+                        </div>
+                    `;
+                    
+                    item.addEventListener('click', () => displayKeyValue(key));
+                    keyList.appendChild(item);
+                }
+                
+                // Select the first key by default
+                if (localStorage.length > 0) {
+                    displayKeyValue(localStorage.key(0));
+                }
+            }
+            
+            // Export all data as JSON
+            function exportAllData() {
+                const data = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    data[key] = safeJsonParse(localStorage.getItem(key));
+                }
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `workout-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            // Download current key as JSON
+            function downloadCurrentKey() {
+                if (!selectedKey) return;
+                
+                const value = localStorage.getItem(selectedKey);
+                const blob = new Blob([value], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${selectedKey}-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            // Copy current key to clipboard
+            function copyToClipboard() {
+                if (!selectedKey) return;
+                
+                const value = localStorage.getItem(selectedKey);
+                navigator.clipboard.writeText(value).then(() => {
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fas fa-check me-1"></i> Copiado!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                    }, 2000);
+                });
+            }
+            
+            // Clear all localStorage data
+            function clearStorage() {
+                if (confirm('Tem certeza que deseja limpar TODO o armazenamento local? Esta ação não pode ser desfeita.')) {
+                    localStorage.clear();
+                    listKeys();
+                    jsonViewer.innerHTML = '<div class="text-muted p-3 text-center">Nenhuma chave selecionada</div>';
+                    updateStorageUsage();
+                    copyBtn.disabled = true;
+                    downloadBtn.disabled = true;
+                }
+            }
+            
+            // Handle JSON file import
+            function handleFileImport(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        if (confirm('Tem certeza que deseja importar estes dados? Isso irá sobrescrever os dados atuais.')) {
+                            // Clear existing data
+                            localStorage.clear();
+                            
+                            // Handle different data formats
+                            if (Array.isArray(importedData)) {
+                                // For array format, store with a default key
+                                localStorage.setItem('imported_exercises', JSON.stringify(importedData));
+                            } else if (typeof importedData === 'object' && importedData !== null) {
+                                // For object format, import each key-value pair
+                                Object.entries(importedData).forEach(([key, value]) => {
+                                    try {
+                                        // Only stringify if it's not already a string
+                                        if (typeof value !== 'string') {
+                                            value = JSON.stringify(value);
+                                        }
+                                        localStorage.setItem(key, value);
+                                    } catch (error) {
+                                        console.error(`Erro ao importar chave ${key}:`, error);
+                                        throw new Error(`Falha ao importar chave: ${key}`);
+                                    }
+                                });
+                            } else {
+                                throw new Error('Formato de arquivo não suportado. Use um objeto JSON ou array.');
+                            }
+                            
+                            // Update UI
+                            listKeys();
+                            updateStorageUsage();
+                            mostrarMensagem('Dados importados com sucesso!', 'success');
+                            
+                            // Force refresh the page to ensure all data is properly loaded
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao importar JSON:', error);
+                        mostrarMensagem(`Erro ao importar: ${error.message || 'Formato de arquivo inválido'}`, 'danger');
+                    }
+                };
+                
+                reader.onerror = function() {
+                    mostrarMensagem('Erro ao ler o arquivo. Verifique se o arquivo não está corrompido.', 'danger');
+                };
+                
+                reader.readAsText(file);
+                
+                // Reset the input to allow importing the same file again
+                event.target.value = '';
+            }
+            
+            // Show success/error message
+            function mostrarMensagem(mensagem, tipo = 'info') {
+                const mensagemDiv = document.createElement('div');
+                mensagemDiv.className = `alert alert-${tipo} alert-dismissible fade show mt-3`;
+                mensagemDiv.role = 'alert';
+                mensagemDiv.innerHTML = `
+                    ${mensagem}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                `;
+                
+                // Append to the container
+                const container = document.querySelector('.container');
+                container.insertBefore(mensagemDiv, container.firstChild);
+                
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    const alert = bootstrap.Alert.getOrCreateInstance(mensagemDiv);
+                    alert.close();
+                }, 5000);
+            }
+            
+            // Setup file input change listener
+            const importInput = document.getElementById('import-json');
+            if (importInput) {
+                importInput.addEventListener('change', handleFileImport);
+            }
+            
+            // Event listeners
+            refreshBtn.addEventListener('click', () => {
+                listKeys();
+                updateStorageUsage();
+            });
+            
+            copyBtn.addEventListener('click', copyToClipboard);
+            downloadBtn.addEventListener('click', downloadCurrentKey);
+            exportBtn.addEventListener('click', exportAllData);
+            clearBtn.addEventListener('click', clearStorage);
+            editBtn.addEventListener('click', openEditModal);
+            saveJsonBtn.addEventListener('click', saveJsonChanges);
+            
+            // Initialize
+            updateStorageUsage();
+            listKeys();
+            
+            // Add event listener for storage events to update when data changes
+            window.addEventListener('storage', () => {
+                updateStorageUsage();
+                listKeys();
+            });
+            updateStorageUsage();
+            
+            // Function to open edit modal
+            function openEditModal() {
+                if (!selectedKey) return;
+                
+                const value = localStorage.getItem(selectedKey);
+                editKeyTitle.textContent = selectedKey;
+                editJsonContent.value = value;
+                editJsonContent.classList.remove('is-invalid');
+                jsonError.style.display = 'none';
+                editModal.show();
+                
+                // Auto-resize textarea
+                editJsonContent.style.height = 'auto';
+                editJsonContent.style.height = editJsonContent.scrollHeight + 'px';
+            }
+            
+            // Function to save edited JSON
+            function saveJsonChanges() {
+                if (!selectedKey) return;
+                
+                try {
+                    // Try to parse the JSON to validate it
+                    const jsonContent = editJsonContent.value.trim();
+                    if (jsonContent) {
+                        JSON.parse(jsonContent);
+                    }
+                    
+                    // If we get here, JSON is valid
+                    localStorage.setItem(selectedKey, jsonContent);
+                    editJsonContent.classList.remove('is-invalid');
+                    jsonError.style.display = 'none';
+                    
+                    // Update the display
+                    displayKeyValue(selectedKey);
+                    updateStorageUsage();
+                    
+                    // Close the modal
+                    editModal.hide();
+                    
+                    // Show success message
+                    alert('Alterações salvas com sucesso!');
+                } catch (e) {
+                    // Invalid JSON
+                    editJsonContent.classList.add('is-invalid');
+                    jsonError.style.display = 'block';
+                    console.error('Erro ao analisar JSON:', e);
+                }
+            }
+            
+            // Auto-resize textarea when typing
+            editJsonContent.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+        });
+    </script>
+</body>
+</html>
