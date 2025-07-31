@@ -111,10 +111,6 @@
   <div id="debug-panel"></div>
   <button id="debug-toggle" onclick="toggleDebugPanel()">Toggle Debug</button>
   <script>
-    // Initial debug log to verify script execution
-    console.log('=== SCRIPT LOADED ===');
-    console.log('Current time:', new Date().toISOString());
-    
     // Debug panel functionality - Commented Out
     const debugPanel = document.getElementById('debug-panel');
     const debugToggle = document.getElementById('debug-toggle');
@@ -910,6 +906,25 @@
       // Reset for next exercise
       document.getElementById("exercicio-select").value = "";
       document.getElementById("contadores").style.display = "none";
+      exercicioAtual = "";
+      dataSessao = null; // Reset session date for next session
+    }
+    
+    function finalizarSessao() {
+      // console.log('finalizarSessao called');
+      
+      // Get current session ID
+      const currentSessionId = localStorage.getItem('currentSessionId');
+      // console.log('Current session ID:', currentSessionId);
+      
+      if (!currentSessionId) {
+        // console.log('No active session to finalize');
+        mostrarMensagem('Nenhuma sessão ativa para finalizar.', 'info');
+        return;
+      }
+      
+      // Get current sessions
+      let historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
       // console.log('Current history entries:', historicoSessoes.length);
       
       // Get exercises for current session
@@ -927,80 +942,13 @@
         return (!earliest || new Date(current.data) < new Date(earliest.data)) ? current : earliest;
       }, null);
       
-      // Get current time
+      // Get current counts using the session's date for accurate weekly/monthly counting
       const now = new Date();
+      const currentCounts = getWorkoutCounts(now);
       
-      // Get all historical sessions to calculate counts
-      const allSessions = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
-      
-      // Debug: Log all sessions being considered
-      console.group('=== DEBUG: Workout Counting ===');
-      console.log('Current session ID:', currentSessionId);
-      console.log('Current date:', now.toISOString());
-      console.log('Total sessions in history:', allSessions.length);
-      
-      // Get unique workout days from all sessions (excluding the current session)
-      const workoutDays = new Set();
-      allSessions.forEach(sessao => {
-        if (sessao.data && sessao.sessionId !== currentSessionId) {
-          const date = new Date(sessao.data);
-          if (!isNaN(date.getTime())) {
-            const dateKey = getDateKey(date);
-            workoutDays.add(dateKey);
-            console.log(`- Session ${sessao.sessionId || 'no-id'} on ${dateKey}` + 
-                       (sessao.isSessionEnd ? ' (session end)' : ''));
-          }
-        }
-      });
-      
-      // Add current session's date
-      const currentDateKey = getDateKey(now);
-      workoutDays.add(currentDateKey);
-      console.log('- Current session date:', currentDateKey);
-      
-      // Get counts for the current week and month
-      const currentWeekNumber = getWeekNumber(now)[1];
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-      
-      console.log('\nCalculating counts for:');
-      console.log(`- Current week: ${currentYear}-W${currentWeekNumber.toString().padStart(2, '0')}`);
-      console.log(`- Current month: ${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}`);
-      
-      let weeklyCount = 0;
-      let monthlyCount = 0;
-      const countedDays = [];
-      
-      // Count unique days in current week and month
-      workoutDays.forEach(dateStr => {
-        const date = new Date(dateStr);
-        const weekDay = date.toLocaleDateString('pt-BR', { weekday: 'long' });
-        let dayCount = '';
-        
-        if (date.getFullYear() === currentYear) {
-          // Check if in current month
-          if (date.getMonth() === currentMonth) {
-            monthlyCount++;
-            dayCount += ' month';
-          }
-          // Check if in current week (using ISO week)
-          const [year, week] = getWeekNumber(date);
-          if (year === now.getFullYear() && week === currentWeekNumber) {
-            weeklyCount++;
-            dayCount += ' week';
-          }
-          
-          countedDays.push(`${dateStr} (${weekDay}):${dayCount || ' not counted'}`);
-        }
-      });
-      
-      // Log the results
-      console.log('\nCounted days:');
-      countedDays.forEach(day => console.log(`- ${day}`));
-      console.log('\nFinal counts:');
-      console.log(`- Weekly workouts: ${weeklyCount}`);
-      console.log(`- Monthly workouts: ${monthlyCount}`);
-      console.groupEnd();
+      // For the first session of the week/month, use 1, otherwise increment the count
+      const weeklyCount = currentCounts.weeklyCount === 0 ? 1 : currentCounts.weeklyCount + 1;
+      const monthlyCount = currentCounts.monthlyCount === 0 ? 1 : currentCounts.monthlyCount + 1;
       
       // Create session end marker with historical counts
       const sessionEndMarker = {
@@ -1040,44 +988,12 @@
       exercicioAtual = "";
       dataSessao = null;
       
-      // Debug: Check if console is available
-      console.log('DEBUG: Reached end of finalizarSessao function');
-      
       // Show success message
-      const successMessage = 'Sessão finalizada com sucesso!';
-      console.log('DEBUG: About to show success message');
-      mostrarMensagem(successMessage, 'success');
-      
-      try {
-        // Log detailed session end message to console
-        console.log('DEBUG: Preparing to log session details');
-        const durationMinutes = Math.round(sessionEndMarker.duracao / 60);
-        const endTime = new Date(sessionEndMarker.data);
-        const startTime = firstExercise ? new Date(firstExercise.data) : endTime;
-        
-        // Simple log first to verify it works
-        console.log('=== SIMPLE SESSION LOG ===');
-        console.log('Session ended at:', sessionEndMarker.dataFormatada);
-        console.log('Exercises:', sessionEndMarker.exerciciosCount);
-        
-        // Then try the formatted version
-        console.group('=== SESSION ENDED ===');
-        console.log('📅 Date:', sessionEndMarker.dataFormatada);
-        console.log('⏱️ Duration:', `${durationMinutes} minutes`);
-        console.log('🕒 Start Time:', startTime && startTime.toLocaleTimeString ? startTime.toLocaleTimeString('pt-BR') : 'N/A');
-        console.log('🏁 End Time:', endTime && endTime.toLocaleTimeString ? endTime.toLocaleTimeString('pt-BR') : 'N/A');
-        console.log('💪 Exercises:', sessionEndMarker.exerciciosCount);
-        console.log('📊 Weekly Workouts:', sessionEndMarker.weeklyCount);
-        console.log('📈 Monthly Workouts:', sessionEndMarker.monthlyCount);
-        console.log('🏷️ Session ID:', sessionEndMarker.sessionId);
-        console.groupEnd();
-        
-        console.log('DEBUG: Session log completed');
-      } catch (error) {
-        console.error('Error logging session details:', error);
-      }
+      // console.log('Showing success message and updating history display');
+      mostrarMensagem('Sessão finalizada com sucesso!', 'success');
       
       // Force a complete refresh of the history display
+      // console.log('Calling exibirHistoricoSessoes()...');
       exibirHistoricoSessoes();
       
       // Verify the history was updated
@@ -1281,28 +1197,8 @@
             
             console.log(`  Session duration: ${duracaoMinutos}m ${segundosRestantes}s, Exercises: ${exerciciosCount}`);
             
-            // Calculate the actual number of sessions in the current week
-            const sessionDate = new Date(endMarker.data);
-            const [currentYear, currentWeek] = getWeekNumber(sessionDate);
-            
-            // Count all unique workout days in the same week as the session
-            const weekSessions = new Set();
-            const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
-            
-            historicoSessoes.forEach(sessao => {
-              if (!sessao.data) return;
-              const sessaoDate = new Date(sessao.data);
-              if (isNaN(sessaoDate.getTime())) return;
-              
-              // Check if the session is in the same week as the current session
-              const [sessaoYear, sessaoWeek] = getWeekNumber(sessaoDate);
-              if (sessaoYear === currentYear && sessaoWeek === currentWeek) {
-                // Use the date as a key to count unique days
-                weekSessions.add(sessaoDate.toISOString().split('T')[0]);
-              }
-            });
-            
-            const weeklyCount = weekSessions.size;
+            // Use the historical counts that were stored when the session ended
+            const weeklyCount = endMarker.weeklyCount || 1;
             const monthlyCount = endMarker.monthlyCount || 1;
             
             const sessionEndHtml = `
@@ -1887,104 +1783,53 @@
       }
     }
     
-    // Helper function to get the ISO week number for a date
-    function getWeekNumber(d) {
-      // Copy date so we don't modify the original
-      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-      // Set to nearest Thursday (current date + 4 - current day number)
-      // Make Sunday's day number 7
-      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-      // Get first day of year
-      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-      // Calculate full weeks to nearest Thursday
-      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-      // Return array of year and week number
-      return [d.getUTCFullYear(), weekNo];
-    }
-
-    // Helper function to get a date string in YYYY-MM-DD format
-    function getDateKey(date) {
-      const d = new Date(date);
-      return d.toISOString().split('T')[0]; // Returns YYYY-MM-DD
-    }
-
     // Get weekly and monthly workout counts based on calendar weeks/months
     function getWorkoutCounts(specificDate = null) {
       const referenceDate = specificDate ? new Date(specificDate) : new Date();
-      const referenceDateKey = getDateKey(referenceDate);
       const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
       
-      // Track unique workout days by week and month
-      const workoutDaysByWeek = new Map();  // key: 'YYYY-WW', value: Set of 'YYYY-MM-DD' dates
-      const workoutDaysByMonth = new Map(); // key: 'YYYY-MM', value: Set of 'YYYY-MM-DD' dates
+      // Get start of week (Sunday) for the reference date
+      const startOfWeek = new Date(referenceDate);
+      startOfWeek.setDate(referenceDate.getDate() - referenceDate.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
       
-      // Track all unique workout days up to the reference date
-      const allWorkoutDays = new Set();
+      // Get end of week (next Saturday) for the reference date
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
       
-      // First pass: collect all unique workout days up to the reference date
-      historicoSessoes.forEach(sessao => {
-        if (!sessao.data) return; // Skip if no date
-        
+      // Get start of month for the reference date
+      const startOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
+      
+      // Get end of month for the reference date
+      const endOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
+      
+      // Filter sessions for the current calendar week (Sunday to Saturday)
+      const weekSessions = historicoSessoes.filter(sessao => {
+        if (!sessao.isSessionEnd) return false;
         const sessaoDate = new Date(sessao.data);
-        if (isNaN(sessaoDate.getTime())) return; // Skip invalid dates
-        
-        // Only count dates up to the reference date
-        const dateKey = getDateKey(sessaoDate);
-        if (dateKey > referenceDateKey) return;
-        
-        allWorkoutDays.add(dateKey);
+        // Only include sessions from the current calendar week (Sunday to Saturday)
+        return sessaoDate >= startOfWeek && sessaoDate <= endOfWeek;
       });
       
-      // Debug: Log all workout days being considered
-      console.log('All workout days up to', referenceDateKey, ':', Array.from(allWorkoutDays).sort());
+      // Debug: Log the dates being used for weekly filtering
+      console.log('Weekly range:', startOfWeek.toLocaleString(), 'to', endOfWeek.toLocaleString());
+      console.log('Sessions in week:', weekSessions.length);
       
-      // Second pass: group workout days by week and month
-      allWorkoutDays.forEach(dateStr => {
-        const date = new Date(dateStr);
-        
-        // Get week number for this date
-        const [year, week] = getWeekNumber(date);
-        const weekKey = `${year}-${week.toString().padStart(2, '0')}`;
-        
-        // Get month for this date
-        const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-        
-        // Initialize week set if it doesn't exist
-        if (!workoutDaysByWeek.has(weekKey)) {
-          workoutDaysByWeek.set(weekKey, new Set());
-        }
-        
-        // Initialize month set if it doesn't exist
-        if (!workoutDaysByMonth.has(monthKey)) {
-          workoutDaysByMonth.set(monthKey, new Set());
-        }
-        
-        // Add date to both week and month sets
-        workoutDaysByWeek.get(weekKey).add(dateStr);
-        workoutDaysByMonth.get(monthKey).add(dateStr);
+      const monthSessions = historicoSessoes.filter(sessao => {
+        if (!sessao.isSessionEnd) return false;
+        const sessaoDate = new Date(sessao.data);
+        return sessaoDate >= startOfMonth && sessaoDate <= endOfMonth;
       });
       
-      // Get the current week and month keys for the reference date
-      const [refYear, refWeek] = getWeekNumber(referenceDate);
-      const currentWeekKey = `${refYear}-${refWeek.toString().padStart(2, '0')}`;
-      const currentMonthKey = `${referenceDate.getFullYear()}-${(referenceDate.getMonth() + 1).toString().padStart(2, '0')}`;
-      
-      // Get the counts for current week and month
-      const weeklyWorkoutDays = workoutDaysByWeek.get(currentWeekKey) || new Set();
-      const monthlyWorkoutDays = workoutDaysByMonth.get(currentMonthKey) || new Set();
-      
-      // Debug info
-      console.log('Current week:', currentWeekKey, 'Workout days:', weeklyWorkoutDays.size, 
-                 Array.from(weeklyWorkoutDays).sort());
-      console.log('Current month:', currentMonthKey, 'Workout days:', monthlyWorkoutDays.size,
-                 Array.from(monthlyWorkoutDays).sort());
+      // Count unique session IDs
+      const weeklyCount = new Set(weekSessions.map(s => s.sessionId)).size;
+      const monthlyCount = new Set(monthSessions.map(s => s.sessionId)).size;
       
       return { 
-        weeklyCount: weeklyWorkoutDays.size,
-        monthlyCount: monthlyWorkoutDays.size,
-        // For debugging/display purposes
-        currentWeek: currentWeekKey,
-        currentMonth: currentMonthKey
+        weeklyCount: weeklyCount,
+        monthlyCount: monthlyCount
       };
     }
     
@@ -2015,100 +1860,6 @@
     let isRunning = false;
     let stopwatchInterval = null;
     let seconds = 0;
-    
-    function finalizarSessao() {
-      console.log('=== FINALIZAR SESSAO CALLED ===');
-      console.log('Current time:', new Date().toISOString());
-      
-      if (!confirm('Tem certeza que deseja finalizar a sessão atual?')) {
-        console.log('User canceled session finalization');
-        return;
-      }
-      
-      console.log('Saving current session...');
-      // Save the current session first
-      salvarSessao();
-      
-      const now = new Date();
-      const currentSessionId = localStorage.getItem('currentSessionId');
-      console.log('Current session ID:', currentSessionId);
-      
-      if (!currentSessionId) {
-        console.error('No active session ID found');
-        mostrarMensagem('Erro: Nenhuma sessão ativa encontrada', 'error');
-        return;
-      }
-      
-      // Get all sessions
-      let historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
-      console.log('Total sessions in history:', historicoSessoes.length);
-      
-      // Get exercises for current session
-      const currentSessionExercises = historicoSessoes.filter(s => s.sessionId === currentSessionId && !s.isSessionEnd);
-      console.log('Exercises in current session:', currentSessionExercises.length);
-      
-      if (currentSessionExercises.length === 0) {
-        console.log('No exercises found in current session');
-        mostrarMensagem('Nenhum exercício encontrado nesta sessão.', 'info');
-        return;
-      }
-      
-      // Get the first exercise for duration calculation
-      const firstExercise = currentSessionExercises.reduce((earliest, current) => {
-        return (!earliest || new Date(current.data) < new Date(earliest.data)) ? current : earliest;
-      }, null);
-      
-      // Calculate workout counts (weekly/monthly)
-      const workoutCounts = getWorkoutCounts(now);
-      const weeklyCount = workoutCounts.weekly;
-      const monthlyCount = workoutCounts.monthly;
-      
-      console.log('Workout counts - Weekly:', weeklyCount, 'Monthly:', monthlyCount);
-      
-      // Create session end marker with historical counts
-      const sessionEndMarker = {
-        isSessionEnd: true,
-        sessionId: currentSessionId,
-        data: now.toISOString(),
-        dataFormatada: now.toLocaleString('pt-BR'),
-        exercicio: "",
-        execucoes: 0,
-        repeticoes: 0,
-        duracao: firstExercise ? Math.floor((now - new Date(firstExercise.data)) / 1000) : 0,
-        exerciciosCount: currentSessionExercises.length,
-        weeklyCount: weeklyCount,
-        monthlyCount: monthlyCount
-      };
-      
-      console.log('Created session end marker:', sessionEndMarker);
-      
-      // Add the end marker to history
-      historicoSessoes.unshift(sessionEndMarker);
-      
-      // Save to localStorage
-      localStorage.setItem("historicoSessoes", JSON.stringify(historicoSessoes));
-      
-      // Mark session as ended
-      const endedSessions = JSON.parse(localStorage.getItem('endedSessions') || '{}');
-      endedSessions[currentSessionId] = true;
-      localStorage.setItem('endedSessions', JSON.stringify(endedSessions));
-      
-      // Clear current session ID
-      localStorage.removeItem('currentSessionId');
-      
-      // Reset UI
-      document.getElementById("exercicio-select").value = "";
-      document.getElementById("contadores").style.display = "none";
-      
-      // Show success message
-      const durationMinutes = Math.round(sessionEndMarker.duracao / 60);
-      const successMessage = `Sessão finalizada! ${sessionEndMarker.exerciciosCount} exercícios em ${durationMinutes} minutos.`;
-      console.log('Session ended:', successMessage);
-      mostrarMensagem(successMessage, 'success');
-      
-      // Refresh history display
-      exibirHistoricoSessoes();
-    }
     
     // Update stopwatch display
     function updateStopwatch() {
