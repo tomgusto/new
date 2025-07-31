@@ -10,11 +10,10 @@
   <meta name="application-name" content="Gerenciador de Treino">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="format-detection" content="telephone=no">
-  
+
   <!-- iOS Meta Tags -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Workout App">
+  <meta name="apple-mobile-web-app-title" content="Gerenciador de Treino">
   <meta name="apple-mobile-web-app-status-bar" content="#007bff">
   
   <!-- Icons -->
@@ -28,26 +27,43 @@
   </script>
   
   <!-- Apple Touch Icons -->
-  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png">
-  <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png">
-  <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512x512.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512x512.png">
   
   <!-- Standard Icons -->
-  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
-  <link rel="icon" type="image/png" sizes="144x144" href="/icons/icon-144x144.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-48x48.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-48x48.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="144x144" href="icons/icon-144x144.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-48x48.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-48x48.png">
   
   <!-- Service Worker Registration -->
   <script>
     // Service Worker Registration - Moved to bottom of body to prevent conflicts
   </script>
   
-  <!-- Splash Screen (iOS) -->
-  <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Splash screens for iPhone 12-16 models -->
   
+  <!-- iPhone 12/13/14/15 Mini (1125x2436px @3x) -->
+  <link href="apple-splash-1125-2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image">
+  <!-- iPhone 12/13/14/15/16 (1170x2532px @3x) -->
+  <link href="apple-splash-1170-2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image">
+  <!-- iPhone 12/13/14/15/16 Pro Max (1284x2778px @3x) -->
+  <link href="apple-splash-1284-2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image">
+  <!-- iPhone 14 Plus, 15 Plus (1290x2796px @3x) -->
+  <link href="apple-splash-1290-2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image">
+  <!-- iPhone 14 Pro/15 Pro (1179x2556px @3x) -->
+  <link href="apple-splash-1179-2556.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image">
+  <!-- iPhone 14 Pro Max/15 Pro Max (1290x2796px @3x) -->
+  <link href="apple-splash-1290-2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image">
+  
+  <!-- Additional splash screen sizes for different iOS devices -->
+  <link rel="apple-touch-startup-image" href="icons/icon-512x512.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="icons/icon-512x512.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="icons/icon-512x512.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="icons/icon-512x512.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+    
   <!-- Theme Color for various browsers -->
   <meta name="theme-color" content="#007bff">
   <meta name="msapplication-navbutton-color" content="#007bff">
@@ -60,7 +76,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
   
-  <!-- Debug Panel -->
+  <!-- Debug Panel - Commented Out 
   <style>
     #debug-panel {
       position: fixed;
@@ -111,36 +127,22 @@
   <div id="debug-panel"></div>
   <button id="debug-toggle" onclick="toggleDebugPanel()">Toggle Debug</button>
   <script>
-    // Debug panel functionality
+    // Debug panel functionality - Commented Out
     const debugPanel = document.getElementById('debug-panel');
     const debugToggle = document.getElementById('debug-toggle');
     
     // Always show debug panel on mobile for troubleshooting
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    let debugEnabled = isMobile || localStorage.getItem('debugEnabled') === 'true';
-    
-    // Initialize debug panel
-    if (debugEnabled) {
-      debugPanel.style.display = 'block';
-      addLog(`User Agent: ${navigator.userAgent}`, 'info');
-      addLog(`Platform: ${navigator.platform}`, 'info');
-      addLog(`Service Worker Support: ${'serviceWorker' in navigator}`, 'info');
-      addLog(`Secure Context: ${window.isSecureContext}`, 'info');
-      addLog(`Location: ${window.location.href}`, 'info');
-    }
+    let debugEnabled = false; // Disabled by default
     
     function toggleDebugPanel() {
       debugEnabled = !debugEnabled;
       debugPanel.style.display = debugEnabled ? 'block' : 'none';
       localStorage.setItem('debugEnabled', debugEnabled);
-      
-      if (debugEnabled) {
-        addLog('Debug panel enabled', 'info');
-      }
     }
     
     function addLog(message, type = 'info') {
-      if (!debugEnabled && type === 'info') return;
+      if (!debugEnabled) return;
       
       const now = new Date();
       const timestamp = now.toISOString().substr(11, 12);
@@ -154,112 +156,32 @@
       
       debugPanel.appendChild(logEntry);
       debugPanel.scrollTop = debugPanel.scrollHeight;
-      
-      // Auto-show panel on errors/warnings
-      if ((type === 'error' || type === 'warning') && !debugEnabled) {
-        debugEnabled = true;
-        debugPanel.style.display = 'block';
-        localStorage.setItem('debugEnabled', 'true');
-      }
     }
     
-    // Log service worker registration
-    function registerServiceWorker() {
-      if ('serviceWorker' in navigator) {
-        const swUrl = '/service-worker.js';
-        addLog(`Registering service worker: ${swUrl}`, 'info');
-        
-        // Test if the service worker file is accessible
-        fetch(swUrl, { cache: 'no-store' })
-          .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return navigator.serviceWorker.register(swUrl);
-          })
-          .then(registration => {
-            addLog('ServiceWorker registration successful', 'info');
-            
-            // Check if there's a controller
-            if (!navigator.serviceWorker.controller) {
-              addLog('No active service worker controller', 'warning');
-            } else {
-              addLog('Active service worker found', 'info');
-            }
-            
-            // Listen for controller changes
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-              addLog('Service worker controller changed, reloading...', 'info');
-              window.location.reload();
-            });
+    // Service worker registration (kept but without debug logging)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(registration) {
+            console.log('ServiceWorker registration successful');
             
             // Check for updates
             registration.addEventListener('updatefound', () => {
               const newWorker = registration.installing;
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  addLog('New content is available; please refresh.', 'info');
+                  console.log('New content is available; please refresh.');
                 }
               });
             });
           })
-          .catch(error => {
-            const errorMsg = `ServiceWorker registration failed: ${error.message}`;
-            addLog(errorMsg, 'error');
-            
-            // Store error in localStorage for debugging
-            try {
-              const errors = JSON.parse(localStorage.getItem('swErrors') || '[]');
-              errors.push({
-                timestamp: new Date().toISOString(),
-                error: error.toString(),
-                userAgent: navigator.userAgent,
-                location: window.location.href
-              });
-              localStorage.setItem('swErrors', JSON.stringify(errors));
-            } catch (e) {
-              console.error('Failed to store error:', e);
-            }
+          .catch(function(error) {
+            console.error('ServiceWorker registration failed: ', error);
           });
-      } else {
-        addLog('Service workers are not supported in this browser.', 'warning');
-      }
-    }
-    
-    // Listen for service worker debug messages
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data?.type === 'SW_DEBUG') {
-          addLog(event.data.message, 'info');
-        }
       });
-      
-      // Register service worker after page load
-      window.addEventListener('load', () => {
-        addLog('Page loaded, registering service worker...', 'info');
-        registerServiceWorker();
-      });
-    }
-    
-    // Add initial logs
-    addLog('Debug system initialized', 'info');
-    addLog(`Page loaded at: ${new Date().toISOString()}`, 'info');
-    
-    // Add a test button for manual service worker registration
-    if (isMobile) {
-      const testButton = document.createElement('button');
-      testButton.textContent = 'Test SW Registration';
-      testButton.style.position = 'fixed';
-      testButton.style.top = '10px';
-      testButton.style.right = '10px';
-      testButton.style.zIndex = '10000';
-      testButton.style.padding = '5px 10px';
-      testButton.style.backgroundColor = '#4CAF50';
-      testButton.style.color = 'white';
-      testButton.style.border = 'none';
-      testButton.style.borderRadius = '3px';
-      testButton.onclick = registerServiceWorker;
-      document.body.appendChild(testButton);
     }
   </script>
+  -->
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -355,7 +277,7 @@
     
     .container {
       max-width: 800px;
-      margin: 0 auto;
+      margin: 40px auto;
       padding: 0.8em;
       background: white;
       min-height: 100vh;
@@ -1036,13 +958,15 @@
         return (!earliest || new Date(current.data) < new Date(earliest.data)) ? current : earliest;
       }, null);
       
-      // Get current counts and increment them for this session
-      const currentCounts = getWorkoutCounts();
-      const weeklyCount = Math.max(1, currentCounts.weeklyCount + 1);
-      const monthlyCount = Math.max(1, currentCounts.monthlyCount + 1);
+      // Get current counts using the session's date for accurate weekly/monthly counting
+      const now = new Date();
+      const currentCounts = getWorkoutCounts(now);
+      
+      // For the first session of the week/month, use 1, otherwise increment the count
+      const weeklyCount = currentCounts.weeklyCount === 0 ? 1 : currentCounts.weeklyCount + 1;
+      const monthlyCount = currentCounts.monthlyCount === 0 ? 1 : currentCounts.monthlyCount + 1;
       
       // Create session end marker with historical counts
-      const now = new Date();
       const sessionEndMarker = {
         isSessionEnd: true,
         sessionId: currentSessionId,
@@ -1236,7 +1160,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-weight: 500;">${hora} - ${exercicioNome}</span>
                   <button 
-                    onclick="removerSessao(${sessao.originalIndex})" 
+                    onclick="removerExercicio(${sessao.originalIndex})" 
                     style="
                       background: #ff4d4f; 
                       color: white; 
@@ -1256,7 +1180,7 @@
                     "
                     onmouseover="this.style.backgroundColor='#ff7875'"
                     onmouseout="this.style.backgroundColor='#ff4d4f'"
-                    title="Excluir"
+                    title="Excluir exercício"
                   >
                     ×
                   </button>
@@ -1800,14 +1724,78 @@
       exibirHistoricoSessoes();
     }
 
+    function removerExercicio(index) {
+      const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
+      if (index >= 0 && index < historicoSessoes.length) {
+        const exerciseToRemove = historicoSessoes[index];
+        const sessionId = exerciseToRemove.sessionId;
+        
+        if (!sessionId) {
+          // If no session ID, just remove the exercise
+          if (!confirm('Tem certeza que deseja excluir este exercício?')) return;
+          historicoSessoes.splice(index, 1);
+        } else {
+          // Find all exercises in this session
+          const sessionExercises = historicoSessoes.filter(s => s.sessionId === sessionId && !s.isSessionEnd);
+          
+          if (sessionExercises.length <= 1) {
+            // If this is the last exercise, show special message and remove the entire session
+            if (!confirm('Este é o último exercício da sessão. Toda a sessão será deletada junto.')) return;
+            
+            // Remove all entries with this sessionId
+            const updatedHistorico = historicoSessoes.filter(session => {
+              return !session.sessionId || session.sessionId !== sessionId;
+            });
+            
+            // Save the updated history
+            localStorage.setItem("historicoSessoes", JSON.stringify(updatedHistorico));
+            
+            // Update the display
+            exibirHistoricoSessoes();
+            
+            // Show success message
+            mostrarMensagem('Sessão removida com sucesso!', 'success');
+            return;
+          } else {
+            // Remove just this exercise
+            if (!confirm('Tem certeza que deseja excluir este exercício?')) return;
+            historicoSessoes.splice(index, 1);
+          }
+        }
+        
+        // Save the updated history
+        localStorage.setItem("historicoSessoes", JSON.stringify(historicoSessoes));
+        
+        // Update the display
+        exibirHistoricoSessoes();
+        
+        // Show success message
+        mostrarMensagem('Exercício removido com sucesso!', 'success');
+      }
+    }
+    
     function removerSessao(index) {
       if (!confirm('Tem certeza que deseja excluir esta sessão?')) return;
       
-      const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes")) || [];
+      const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
       if (index >= 0 && index < historicoSessoes.length) {
-        historicoSessoes.splice(index, 1);
-        localStorage.setItem("historicoSessoes", JSON.stringify(historicoSessoes));
+        const sessionToRemove = historicoSessoes[index];
+        const sessionIdToRemove = sessionToRemove.sessionId;
+        
+        // Remove all entries with this sessionId (both exercises and session end marker)
+        const updatedHistorico = historicoSessoes.filter(session => {
+          // Keep sessions that don't match the ID, or don't have an ID (legacy support)
+          return !session.sessionId || session.sessionId !== sessionIdToRemove;
+        });
+        
+        // Save the updated history
+        localStorage.setItem("historicoSessoes", JSON.stringify(updatedHistorico));
+        
+        // Update the display
         exibirHistoricoSessoes();
+        
+        // Show success message
+        mostrarMensagem('Sessão removida com sucesso!', 'success');
       }
     }
     
@@ -1821,24 +1809,34 @@
       startOfWeek.setDate(referenceDate.getDate() - referenceDate.getDay());
       startOfWeek.setHours(0, 0, 0, 0);
       
+      // Get end of week (next Saturday) for the reference date
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+      
       // Get start of month for the reference date
       const startOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
       
-      // Get end of day for the reference date
-      const endOfDay = new Date(referenceDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Get end of month for the reference date
+      const endOfMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
       
-      // Filter sessions for the week and month of the reference date
+      // Filter sessions for the current calendar week (Sunday to Saturday)
       const weekSessions = historicoSessoes.filter(sessao => {
         if (!sessao.isSessionEnd) return false;
         const sessaoDate = new Date(sessao.data);
-        return sessaoDate >= startOfWeek && sessaoDate <= endOfDay;
+        // Only include sessions from the current calendar week (Sunday to Saturday)
+        return sessaoDate >= startOfWeek && sessaoDate <= endOfWeek;
       });
+      
+      // Debug: Log the dates being used for weekly filtering
+      console.log('Weekly range:', startOfWeek.toLocaleString(), 'to', endOfWeek.toLocaleString());
+      console.log('Sessions in week:', weekSessions.length);
       
       const monthSessions = historicoSessoes.filter(sessao => {
         if (!sessao.isSessionEnd) return false;
         const sessaoDate = new Date(sessao.data);
-        return sessaoDate >= startOfMonth && sessaoDate <= endOfDay;
+        return sessaoDate >= startOfMonth && sessaoDate <= endOfMonth;
       });
       
       // Count unique session IDs
@@ -1846,8 +1844,8 @@
       const monthlyCount = new Set(monthSessions.map(s => s.sessionId)).size;
       
       return { 
-        weeklyCount: Math.max(1, weeklyCount), // Ensure at least 1
-        monthlyCount: Math.max(1, monthlyCount) // Ensure at least 1
+        weeklyCount: weeklyCount,
+        monthlyCount: monthlyCount
       };
     }
     
