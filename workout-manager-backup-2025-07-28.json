@@ -1,0 +1,86 @@
+{
+  "historicoSessoes": [
+    {
+      "data": "2025-07-27T01:34:15.488Z",
+      "mensagem": "Sessão iniciada",
+      "tipo": "inicio_sessao",
+      "dataFormatada": "26/07/2025, 22:34:15"
+    },
+    {
+      "data": "2025-07-27T01:34:34.871Z",
+      "exercicio": "Tríceps Testa na Polia com Barra Reta",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 40,
+      "carga2": null,
+      "dataFormatada": "26/07/2025, 22:34:34",
+      "tipo": "sessao",
+      "sessionStartTime": "2025-07-27T01:34:15.488Z"
+    },
+    {
+      "data": "2025-07-27T01:34:27.033Z",
+      "exercicio": "Crossover Polia Alta",
+      "execucoes": 4,
+      "repeticoes": 12,
+      "carga1": 10,
+      "carga2": null,
+      "dataFormatada": "26/07/2025, 22:34:27",
+      "tipo": "sessao",
+      "sessionStartTime": "2025-07-27T01:34:15.488Z"
+    },
+    {
+      "data": "2025-07-27T01:34:19.769Z",
+      "exercicio": "Supino Inclinado com Halteres",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 10,
+      "carga2": null,
+      "dataFormatada": "26/07/2025, 22:34:19",
+      "tipo": "sessao",
+      "sessionStartTime": "2025-07-27T01:34:15.488Z"
+    },
+    {
+      "tipo": "finalizacao",
+      "data": "2025-07-27T01:34:40.110Z",
+      "dataFormatada": "26/07/2025, 22:34:40",
+      "mensagem": "Treino Finalizado",
+      "duracao": "00:00:24",
+      "startTime": "2025-07-27T01:34:15.488Z",
+      "endTime": "2025-07-27T01:34:40.110Z",
+      "treinoSemana": 1,
+      "treinoMes": 1
+    }
+  ],
+  "sessoes": [],
+  "exercicios": [
+    "Supino Inclinado com Halteres",
+    "Banco Supino Reto + Crucifixo com Halteres",
+    "Crossover Polia Alta",
+    "Tríceps Francês na Polia com Barra Reta",
+    "Tríceps Testa na Polia com Barra Reta",
+    "Desenvolvimento com Halteres Sentado",
+    "Elevação frontal / lateral",
+    "Abdominal Infra Pernas Estendidas (Curto)",
+    "Spinning",
+    "Caminhada",
+    "Natação",
+    "Dança",
+    "Barra Fixa Gráviton (Pegada Aberta) + Remada Curvada com Barra Reta (Pegada Supinada)",
+    "Puxada Neutra triangulo",
+    "Remada Unilateral Halteres - Pegada Neutra (Serro)",
+    "Rosca Direta na Polia (Barra Reta) + Rosca Inversa com Barra Reta",
+    "Rosca Direta Barra H",
+    "Crucifixo Inverso Máquina",
+    "Remada Alta com Barra W",
+    "PERNA (INFERIORES)",
+    "Leg Press 45",
+    "Cadeira Extensora + Passada",
+    "Cadeira Flexora + Stiff com Halteres",
+    "Abdução de Quadril Máquina + Agachamento Sumô com Halteres",
+    "Adução de Quadril Máquina",
+    "Extensão de Panturrilha Maquina",
+    "Abdominal Supra Banco Declinado",
+    "Abdominal Supra no Solo Pés Altos",
+    "Pilates"
+  ]
+}

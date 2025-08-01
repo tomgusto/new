@@ -1,0 +1,14 @@
+﻿Version,Timestamp,Description,FileName
+1,20250727_110149,Initial backup version,versions\v1_20250727_110149.html
+2,20250727_110410,Clean version from backup (base for restoration),versions\v2_20250727_110410.html
+3,20250727_110656,Before PWA enhancements,versions\v3_20250727_110656.html
+4,20250727_110912,Added PWA support (meta tags, service worker registration, and offline capabilities),versions\v4_20250727_110912.html
+5,20250727_111518,Before UI/UX and session management enhancements,versions\v5_20250727_111518.html
+v6,_20250727_11521,Moved export buttons below session history and fixed HTML export
+7,20250727_115438,Fixed version control script to properly handle version numbering,versions\v7_20250727_115438.html
+8,20250727_123055,Before implementing new session history design,versions\v8_20250727_123055.html
+9,20250727_133727,v9 - Implemented Model 2 session history with multiline layout and styled start/end markers,versions\v9_20250727_133727.html
+10,20250727_144917,v9.1 - Added consistent spacing after all exercises in session history,versions\v10_20250727_144917.html
+11,20250727_162048,Added seconds to time display and enhanced exports with session boundaries,versions\v11_20250727_162048.html
+12,20250729_141021,v12 - Improved button layouts: aligned +Execução button with counter, fixed button styles and spacing,versions\v12_20250729_141021.html
+v24,20250731_210738,Updated splash screen configuration for better iOS support

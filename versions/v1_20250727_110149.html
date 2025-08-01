@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="pt-br" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciador de Treino</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#007bff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Gerenciador de Treino">
+  <meta name="apple-mobile-web-app-title" content="Workout App">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com; img-src 'self' data:;">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+  
+  <!-- Simple PDF Export Implementation -->
+  <script>
+  // HTML export function
+  function exportToHTML() {
+    try {
+      const sessoesAtuais = JSON.parse(localStorage.getItem('sessoes') || '[]');
+      const historico = JSON.parse(localStorage.getItem('historicoSessoes') || '[]');
+      
+      if (sessoesAtuais.length === 0 && historico.length === 0) {
+        alert('Nenhuma sessão para exportar.');
+        return;
+      }
+
+      // Reconstruct session history with exercises grouped by session
+      const sessions = [];
+      let currentSession = [];
+      let sessionStartTime = null;
+      let lastItemDate = null;
+      
+      // Process history in chronological order
+      const allItems = [...historico, ...sessoesAtuais.map(s => ({ ...s, isCurrent: true }))];
+      allItems.sort((a, b) => new Date(a.data) - new Date(b.data));
+      
+      // Helper function to finalize the current session
+      const finalizeCurrentSession = (endTime = null, endMessage = null) => {
+        if (currentSession.length > 0) {
+          sessions.push({
+            type: 'session',
+            startTime: sessionStartTime || new Date(),
+            endTime: endTime,
+            items: currentSession.filter(i => i.tipo === 'sessao' || i.isCurrent),
+            endMessage: endMessage
+          });
+          currentSession = [];
+          sessionStartTime = null;
+        }
+      };
+      
+      // Group items into sessions
+      allItems.forEach((item, index) => {
+        const itemDate = new Date(item.data).toDateString();
+        const isNewDay = lastItemDate && lastItemDate !== itemDate;
+        
+        // If this is a new day and we have an open session, close it first
+        if (isNewDay && currentSession.length > 0) {
+          finalizeCurrentSession(
+            new Date(item.data),
+            { tipo: 'finalizacao', data: item.data, mensagem: 'Fim do treino (automático)' }
+          );
+        }
+        
+        // Start a new session if needed
+        if (currentSession.length === 0 || item.tipo === 'inicio_sessao' || isNewDay) {
+          // If we have a previous session, finalize it first
+          if (currentSession.length > 0) {
+            finalizeCurrentSession(
+              new Date(item.data),
+              { tipo: 'finalizacao', data: item.data, mensagem: 'Fim do treino (automático)' }
+            );
+          }
+          
+          // Add session start marker if not present
+          if (item.tipo !== 'inicio_sessao') {
+            currentSession.push({
+              tipo: 'inicio_sessao',
+              data: item.data,
+              mensagem: 'Início do treino (automático)'
+            });
+          } else {
+            currentSession.push(item);
+          }
+          
+          sessionStartTime = new Date(item.data);
+        }
+        
+        // Handle session end
+        if (item.tipo === 'finalizacao') {
+          currentSession.push(item);
+          finalizeCurrentSession(new Date(item.data), item);
+        } 
+        // Add exercise to current session
+        else if (item.tipo === 'sessao' || item.isCurrent) {
+          currentSession.push(item);
+        }
+        
+        // Update the last item date for day-based grouping
+        lastItemDate = itemDate;
+      });
+      
+      // Add any remaining exercises as a session
+      if (currentSession.length > 0) {
+        finalizeCurrentSession(
+          new Date(),
+          { 
+            tipo: 'finalizacao', 
+            data: new Date().toISOString(), 
+            mensagem: 'Fim do treino (automático)' 
+          }
+        );
+      }
+
+      // Create HTML with proper encoding and emoji support
+      let html = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Histórico de Treino</title>
+          <style>
+            @page { 
+              size: A4;
+              margin: 1cm;
+              /* Removed unsupported @top-center and @bottom-center rules */
+            }
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 20px;
+              color: #333;
+              line-height: 1.6;
+            }
+            h1 { 
+              color: #2c3e50; 
+              font-size: 24px; 
+              margin-bottom: 10px;
+              text-align: center;
+              padding-bottom: 10px;
+              border-bottom: 2px solid #eee;
+            }
+            h2 { 
+              color: #2c3e50; 
+              font-size: 18px; 
+              margin: 30px 0 10px;
+              padding-bottom: 5px;
+              border-bottom: 1px solid #eee;
+              page-break-after: avoid;
+            }
+            .subtitle { 
+              color: #666; 
+              font-size: 14px; 
+              margin-bottom: 20px;
+              text-align: center;
+            }
+            .session-container {
+              margin-bottom: 40px;
+              page-break-inside: avoid;
+            }
+            .session-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 10px;
+              flex-wrap: wrap;
+            }
+            .session-date {
+              font-size: 0.9em;
+              color: #666;
+              margin-top: 5px;
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin: 10px 0 20px;
+              font-size: 12px;
+              page-break-inside: avoid;
+            }
+            th { 
+              background-color: #2c3e50; 
+              color: white; 
+              text-align: left; 
+              padding: 8px 10px;
+              position: sticky;
+              top: 0;
+            }
+            td { 
+              border: 1px solid #e0e0e0; 
+              padding: 6px 10px; 
+              vertical-align: top;
+            }
+            tr:nth-child(even) { 
+              background-color: #f8f9fa; 
+            }
+            .session-start-row {
+              background-color: #e3f2fd !important;
+              font-weight: bold;
+            }
+            .session-start-row td {
+              border-left: 4px solid #1976d2;
+            }
+            .session-end-row {
+              background-color: #e8f5e9 !important;
+              font-weight: bold;
+            }
+            .session-end-row td {
+              border-left: 4px solid #4caf50;
+            }
+            .session-end-info {
+              font-size: 0.9em;
+              color: #2e7d32;
+              margin-top: 4px;
+              font-weight: normal;
+              opacity: 0.9;
+            }
+            @media print {
+              body { 
+                margin: 0; 
+                padding: 0;
+                font-size: 11px;
+              }
+              .session-container {
+                page-break-inside: avoid;
+              }
+              table {
+                page-break-inside: avoid;
+              }
+              .no-print {
+                display: none !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Histórico de Treino</h1>
+          <div class="subtitle">Gerado em: ${new Date().toLocaleString('pt-BR')}</div>
+      `;
+
+      // Process each session
+      sessions.forEach((session, sessionIndex) => {
+        if (session.items.length === 0) return;
+        
+        const sessionDate = session.startTime;
+        const isCurrentSession = sessionIndex === sessions.length - 1 && !session.endMessage;
+        const sessionTitle = isCurrentSession ? 'Sessão Atual' : 
+                           `Sessão ${sessionIndex + 1} - ${sessionDate.toLocaleDateString('pt-BR')}`;
+        
+        // Session header
+        html += `
+          <div class="session-container">
+            <div class="session-header">
+              <h2>${sessionTitle}</h2>
+              <span class="session-date">Iniciado em: ${sessionDate.toLocaleString('pt-BR')}</span>
+            </div>
+            <table>
+              <colgroup>
+                <col style="width: 20%;">
+                <col style="width: 25%;">
+                <col style="width: 10%;">
+                <col style="width: 10%;">
+                <col style="width: 15%;">
+                <col style="width: 20%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Data/Hora</th>
+                  <th>Exercício</th>
+                  <th>Séries</th>
+                  <th>Reps</th>
+                  <th>Carga 1 (kg)</th>
+                  <th>Carga 2 (kg)</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        // Find start message or create one
+        const startMessage = session.items.find(item => item.tipo === 'inicio_sessao') || 
+          { tipo: 'inicio_sessao', data: session.startTime.toISOString(), mensagem: 'Início do treino' };
+        
+        // Add session start message
+        html += `
+          <tr class="session-start-row">
+            <td>${new Date(startMessage.data).toLocaleString('pt-BR')}</td>
+            <td colspan="5">${startMessage.mensagem || '🏁 Início da sessão de treino'}</td>
+          </tr>
+        `;
+
+        // Add exercise rows
+        session.items
+          .filter(item => (item.tipo === 'sessao' || item.isCurrent) && item.exercicio)
+          .forEach(item => {
+            const itemDate = new Date(item.data);
+            html += `
+              <tr>
+                <td>${itemDate.toLocaleTimeString('pt-BR')}</td>
+                <td>${item.exercicio || ''}</td>
+                <td>${item.execucoes || ''}</td>
+                <td>${item.repeticoes || ''}</td>
+                <td>${item.carga1 || ''}</td>
+                <td>${item.carga2 || ''}</td>
+              </tr>
+            `;
+          });
+
+        // Add session end message if exists
+        if (session.endMessage) {
+          const msg = session.endMessage;
+          const endTime = session.endTime || new Date();
+          const duration = msg.duracao || 'N/A';
+          
+          html += `
+            <tr class="session-end-row">
+              <td>${endTime.toLocaleTimeString('pt-BR')}</td>
+              <td colspan="5">
+                ${msg.mensagem || '🏁 Treino finalizado'}
+                <div class="session-end-info">
+                  Duração: ${duration} | Treino #${msg.treinoSemana || 'N/A'} da semana | Total no mês: ${msg.treinoMes || 'N/A'} treinos
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+
+        html += `
+              </tbody>
+            </table>
+          </div>
+        `;
+      });
+
+      html += `
+        </body>
+        </html>
+      `;
+
+      // Create a blob with BOM for UTF-8 and download link
+      const blob = new Blob(['\uFEFF' + html], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `historico_treino_${new Date().toISOString().slice(0,10)}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Erro ao exportar:', error);
+      alert('Não foi possível exportar o histórico. Por favor, tente novamente.');
+    }
+  }
+  </script>
+  <style>
+    .mensagem-finalizacao {
+      background-color: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      margin: 5px 0;
+    }
+    
+    .mensagem-finalizacao div {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .mensagem-finalizacao strong {
+      color: #2e7d32;
+    }
+    
+    :root {
+      --primary-color: #007BFF;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --bg-color: #f4f4f4;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --border-radius: 8px;
+      --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      --transition: all 0.2s ease;
+    }
+    
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+      padding: 1em;
+      background: var(--bg-color);
+      color: var(--text-color);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.5;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 0.8em;
+      margin: 0.5em 0;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    /* Stopwatch Styles */
+    .stopwatch-container {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    #stopwatch {
+      font-size: 2em;
+      font-family: monospace;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #007BFF;
+    }
+    
+    .stopwatch-controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 10px 0;
+    }
+    
+    .stopwatch-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      background: #007BFF;
+      color: white;
+      font-size: 1.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .stopwatch-btn:active {
+      transform: scale(0.95);
+    }
+    
+    #startStop {
+      background: #28a745;
+    }
+    
+    #reset {
+      background: #dc3545;
+    }
+    
+    #lap {
+      background: #ffc107;
+      color: #212529;
+    }
+    
+    .laps-container {
+      margin-top: 15px;
+      max-height: 150px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .lap-time {
+      padding: 8px;
+      margin: 5px 0;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    
+    button:not(:disabled):hover {
+      filter: brightness(0.9);
+      transform: translateY(-1px);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    .salvar-btn {
+      background-color: #28a745;
+      margin-top: 10px;
+    }
+    .salvar-btn:hover {
+      background-color: #218838;
+    }
+    .contadores {
+      display: none;
+      text-align: center;
+      margin-top: 1em;
+    }
+    .contador-btn {
+      width: 48%;
+      margin: 0.5em 1%;
+    }
+    .contador-input {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    .contador-input label {
+      margin-right: 10px;
+      min-width: 100px;
+      text-align: right;
+    }
+    .contador-input input {
+      width: 80px;
+      text-align: center;
+      margin: 0 5px;
+    }
+    #lista-exercicios {
+      list-style: none;
+      padding: 0;
+    }
+    #lista-exercicios li {
+      padding: 0.4em;
+      background: #ddd;
+      margin: 0.3em 0;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .remover {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .remover:hover {
+      background: #c82333;
+    }
+    
+    .export-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .export-btn:first-child {
+      background-color: #28a745;
+    }
+    
+    .export-btn:first-child:hover {
+      background-color: #218838;
+    }
+    
+    /* iOS input zoom fix */
+    @media screen and (-webkit-min-device-pixel-ratio:0) { 
+      select:focus,
+      textarea:focus,
+      input:focus {
+        font-size: 16px;
+      }
+    }
+    
+    /* Optimize for touch devices */
+    @media (hover: none) {
+      button:active {
+        transform: scale(0.95);
+      }
+    }
+    
+    /* Print styles */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printable-area, #printable-area * {
+        visibility: visible;
+      }
+      #printable-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+    
+    /* Collapsible exercises panel */
+    .exercises-card {
+      border: 1px solid #dee2e6;
+      border-radius: 0.25rem;
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    
+    .exercises-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    
+    .exercises-content {
+      max-height: 300px;
+      overflow-y: auto;
+      transition: max-height 0.3s ease;
+    }
+    
+    .exercises-content.collapsed {
+      max-height: 0;
+      overflow: hidden;
+    }
+    
+    .exercise-item {
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid #dee2e6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .exercise-item:last-child {
+      border-bottom: none;
+    }
+    
+    .exercise-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .exercise-btn {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid transparent;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      background: none;
+    }
+    
+    .select-btn {
+      color: #0d6efd;
+      border-color: #0d6efd;
+    }
+    
+    .select-btn:hover {
+      background-color: #0d6efd;
+      color: white;
+    }
+    
+    .delete-btn {
+      color: #dc3545;
+      border-color: #dc3545;
+    }
+    
+    .delete-btn:hover {
+      background-color: #dc3545;
+      color: white;
+    }
+    #exercisesList .list-group-item {
+      padding: 0.5rem 1rem;
+      border-left: none;
+      border-right: none;
+    }
+    
+    .btn-delete-exercise {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 0.5rem;
+      font-size: 0.7rem;
+    }
+    
+    .exercise-name {
+      flex-grow: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .card-header[data-bs-toggle="collapse"] {
+      cursor: pointer;
+    }
+    
+    .card-header[data-bs-toggle="collapse"]:hover {
+      background-color: rgba(0, 0, 0, 0.03);
+    }
+  </style>
+  
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    // Register service worker for offline functionality
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        // Check if this is a page refresh
+        const isPageRefresh = performance.navigation.type === 1;
+        
+        // Register the new service worker
+        navigator.serviceWorker.register('/sw-new.js', { scope: '/' })
+          .then(function(registration) {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            
+            // Check for updates immediately
+            registration.update().catch(err => 
+              console.log('ServiceWorker update check failed: ', err));
+            
+            // Listen for the "controllerchange" event to detect when a new service worker takes control
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+              if (isPageRefresh) {
+                // If this is a page refresh, we'll let it handle naturally
+                console.log('New service worker activated after page refresh');
+              } else {
+                // Otherwise, show a message and reload
+                console.log('New content is available; please refresh.');
+                if (window.confirm('Uma nova versão do aplicativo está disponível. Recarregar agora?')) {
+                  window.location.reload();
+                }
+              }
+            });
+            
+            // Check for a waiting service worker
+            if (registration.waiting) {
+              console.log('Found waiting service worker, attempting to update...');
+              registration.waiting.postMessage({type: 'SKIP_WAITING'});
+            }
+            
+            // Track successful registration
+            trackEvent('service_worker', 'registered', 'v5.0');
+            
+          }).catch(function(err) {
+            console.error('ServiceWorker registration failed: ', err);
+            trackEvent('service_worker', 'registration_failed', err.message);
+            
+            // Fallback to the old service worker if the new one fails
+            if (err.message.includes('sw-new.js')) {
+              console.log('Falling back to old service worker...');
+              navigator.serviceWorker.register('/sw-clean.js', { scope: '/' })
+                .then(reg => console.log('Fallback service worker registered'))
+                .catch(e => console.error('Fallback service worker registration failed: ', e));
+            }
+          });
+        
+        // Listen for messages from the service worker
+        navigator.serviceWorker.addEventListener('message', event => {
+          if (event.data && event.data.type === 'RELOAD') {
+            window.location.reload();
+          }
+        });
+      });
+    }
+    
+    // Safe storage wrapper
+    const storage = {
+      set: function(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+          return true;
+        } catch (e) {
+          console.error('Error saving to localStorage', e);
+          return false;
+        }
+      },
+      get: function(key) {
+        try {
+          const item = localStorage.getItem(key);
+          return item ? JSON.parse(item) : null;
+        } catch (e) {
+          console.error('Error reading from localStorage', e);
+          return null;
+        }
+      }
+    };
+    
+    // Track basic usage
+    function trackEvent(category, action, label) {
+      try {
+        console.log(`[Analytics] ${category} - ${action} - ${label}`);
+        // In a production app, you would send this to an analytics service
+        // Example: gtag('event', action, { 'event_category': category, 'event_label': label });
+      } catch (e) {
+        console.error('Error tracking event', e);
+      }
+    }
+    
+    // Initialize tracking
+    document.addEventListener('DOMContentLoaded', function() {
+      trackEvent('page', 'view', 'index');
+    });
+  </script>
+</head>
+<body>
+
+  <h1>🏋️ Gerenciador de Treino</h1>
+  <div class="stopwatch-container">
+    <div id="stopwatch">00:00:00</div>
+    <div class="stopwatch-controls">
+      <button id="startStop" class="stopwatch-btn"><i class="fas fa-play"></i></button>
+      <button id="reset" class="stopwatch-btn"><i class="fas fa-redo"></i></button>
+      <button id="lap" class="stopwatch-btn"><i class="fas fa-flag"></i></button>
+    </div>
+    <div id="laps" class="laps-container"></div>
+  </div>
+
+  <!-- Seleção -->
+  <form onsubmit="event.preventDefault(); iniciarTreino();">
+    <label for="exercicio-select">Selecionar exercício:</label>
+    <select id="exercicio-select" required>
+      <option value="">-- Selecione --</option>
+    </select>
+    <button type="submit">Iniciar Execução</button>
+  </form>
+
+  <!-- Contadores -->
+  <div id="contadores" class="contadores">
+    <h2 id="exercicio-nome"></h2>
+    
+    <button class="contador-btn" onclick="incrementar('exec')">+ Execução</button>
+    <span>Execuções: <strong id="exec-count">0</strong></span><br>
+    
+    <div class="contador-input">
+      <label for="rep-count">Repetições:</label>
+      <input type="number" id="rep-count" min="0" onchange="atualizarContador('rep', this.value)">
+    </div>
+    
+    <div class="contador-input">
+      <label for="carga1">Carga 1 (kg):</label>
+      <input type="number" id="carga1" min="0" step="0.5" onchange="atualizarCarga('carga1', this.value)">
+    </div>
+    
+    <div class="contador-input">
+      <label for="carga2">Carga 2 (kg):</label>
+      <input type="number" id="carga2" min="0" step="0.5" onchange="atualizarCarga('carga2', this.value)">
+    </div>
+    
+    <button type="button" onclick="salvarSessao()" class="salvar-btn">💾 Salvar</button>
+    <div id="sessao-salva" style="display: none; margin: 10px 0; padding: 10px; background: #e8f5e9; color: #2e7d32; border-radius: 4px;">
+      Sessão salva com sucesso!
+    </div>
+  </div>
+  
+  <!-- Histórico de Sessões -->
+  <div id="historico-container" style="margin-top: 30px;">
+    <h2>Histórico de Sessões</h2>
+    <div id="historico-sessoes" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: white; min-height: 60px;">
+      <p style="margin: 0; color: #666; font-style: italic;">Nenhuma sessão salva ainda.</p>
+    </div>
+    
+    <!-- Botões de Ação -->
+    <div class="action-buttons" style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; justify-content: center;">
+      <button type="button" onclick="exportarCSV()" class="action-btn" style="background-color: #28a745;">
+        <i class="fas fa-file-csv"></i> Exportar CSV
+      </button>
+      <button type="button" onclick="exportToHTML()" class="action-btn" style="background-color: #17a2b8;">
+        <i class="fas fa-file-export"></i> Exportar HTML
+      </button>
+      <button type="button" onclick="finalizarTreino()" class="action-btn" style="background-color: #dc3545;">
+        <i class="fas fa-flag-checkered"></i> Finalizar Treino
+      </button>
+      <button type="button" onclick="limparSessoes()" class="action-btn" style="background-color: #ffc107; color: #000;">
+        <i class="fas fa-trash-alt"></i> Limpar Tudo
+      </button>
+    </div>
+    
+    <!-- Botões de Exportação (hidden by default, shown when needed) -->
+    <div id="export-buttons" class="export-buttons" style="display: none; gap: 10px; margin: 20px 0; flex-wrap: wrap; justify-content: center;">
+      <button type="button" onclick="exportarCSV()" class="export-btn">
+        <i class="fas fa-file-csv"></i> Exportar CSV
+      </button>
+      <button type="button" onclick="exportToHTML()" class="export-btn">
+        <i class="fas fa-file-export"></i> Exportar HTML
+      </button>
+    </div>
+  </div>
+
+  <!-- Cadastro -->
+  <h2>Cadastrar Novo Exercício</h2>
+  <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+    <input type="text" id="novo-exercicio" placeholder="Nome do exercício">
+    <button onclick="adicionarExercicio()">Adicionar</button>
+    <!-- 
+    IMPORTAR LISTA DE EXERCÍCIOS
+    -->
+    <input type="file" id="import-json" accept=".json" style="display: none;">
+    <button onclick="document.getElementById('import-json').click()">📤 Importar Lista</button>
+    <button type="button" onclick="return mostrarExemploJson()" style="background-color: #6c757d; color: white;">Ver Exemplo</button>
+    
+  </div>
+
+  <!-- Lista de Exercícios -->
+  <div class="container mt-4">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center" 
+           data-bs-toggle="collapse" 
+           data-bs-target="#exercisesCollapse" 
+           aria-expanded="true"
+           aria-controls="exercisesCollapse"
+           style="cursor: pointer;">
+        <h5 class="mb-0">Exercícios Cadastrados</h5>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="collapse show" id="exercisesCollapse">
+        <div class="card-body p-0">
+          <div id="exercisesList" class="list-group list-group-flush">
+            <!-- Exercises will be loaded here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para exemplo de JSON -->
+  <div id="json-example-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 20px; border-radius: 8px; max-width: 500px; width: 90%;">
+      <h3>Exemplo de Formato JSON</h3>
+      <p>Seu arquivo JSON deve conter uma lista de exercícios, um por linha:</p>
+      <pre style="background: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;">[
+  "Supino Reto",
+  "Agachamento Livre",
+  "Remada Curvada",
+  "Desenvolvimento com Halteres",
+  "Puxada Alta"
+]</pre>
+      <div style="text-align: right; margin-top: 15px;">
+        <button onclick="document.getElementById('json-example-modal').style.display = 'none'" style="padding: 8px 16px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let execucoes = 0;
+    let repeticoes = null; // Changed from 0 to empty string
+    let carga1 = null;     // Changed from 0 to empty string
+    let carga2 = null;     // Changed from null to empty string
+    let exercicioAtual = "";
+    let dataSessao = null;
+    let sessionStartTime = null; // Track when the first exercise of the session starts
+
+    function salvarLista(lista) {
+      localStorage.setItem("exercicios", JSON.stringify(lista));
+    }
+
+    function carregarLista() {
+      return JSON.parse(localStorage.getItem("exercicios")) || [];
+    }
+    
+    // Mostra o modal de exemplo de JSON
+    function mostrarExemploJson() {
+      const modal = document.getElementById('json-example-modal');
+      if (modal) {
+        modal.style.display = 'flex';
+        // Add click outside to close
+        modal.onclick = function(event) {
+          if (event.target === modal) {
+            modal.style.display = 'none';
+          }
+        };
+        // Add ESC key to close
+        document.addEventListener('keydown', function escClose(e) {
+          if (e.key === 'Escape') {
+            modal.style.display = 'none';
+            document.removeEventListener('keydown', escClose);
+          }
+        });
+      }
+      return false; // Prevent default action
+    }
+    
+    // Configura o evento de importação de arquivo
+    document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('import-json');
+      if (!fileInput) {
+        console.error('Input de arquivo não encontrado');
+        return;
+      }
+      
+      fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) {
+          console.log('Nenhum arquivo selecionado');
+          return;
+        }
+        
+        console.log('Arquivo selecionado:', file.name);
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          console.log('Conteúdo do arquivo lido');
+          
+          try {
+            console.log('Tentando fazer parse do JSON...');
+            const data = JSON.parse(e.target.result);
+            console.log('Parse do JSON bem-sucedido:', data);
+            
+            let exercicios = [];
+            
+            // Aceita tanto array direto quanto objeto com propriedade 'exercicios'
+            if (Array.isArray(data)) {
+              console.log('Array de exercícios encontrado');
+              exercicios = data;
+            } else if (data.exercicios && Array.isArray(data.exercicios)) {
+              console.log('Objeto com propriedade "exercicios" encontrado');
+              exercicios = data.exercicios;
+            } else {
+              console.error('Formato de arquivo não reconhecido');
+              throw new Error('Formato de arquivo inválido. Use um array de exercícios ou um objeto com a propriedade "exercicios".');
+            }
+            
+            console.log('Exercícios extraídos:', exercicios);
+            
+            if (exercicios.length === 0) {
+              console.warn('Nenhum exercício encontrado no arquivo');
+              alert('Nenhum exercício encontrado no arquivo.');
+              return;
+            }
+            
+            // Filtra e valida os exercícios
+            const listaAtual = carregarLista();
+            console.log('Lista atual de exercícios:', listaAtual);
+            
+            const novosExercicios = [];
+            
+            exercicios.forEach((ex, index) => {
+              const nome = String(ex).trim();
+              console.log(`Processando exercício ${index + 1}:`, nome);
+              
+              if (nome) {
+                if (!listaAtual.includes(nome)) {
+                  console.log(`Novo exercício adicionado: ${nome}`);
+                  novosExercicios.push(nome);
+                } else {
+                  console.log(`Exercício já existe: ${nome}`);
+                }
+              }
+            });
+            
+            console.log('Novos exercícios a serem adicionados:', novosExercicios);
+            
+            if (novosExercicios.length === 0) {
+              console.log('Nenhum novo exercício para importar');
+              alert('Nenhum novo exercício para importar.');
+              return;
+            }
+            
+            // Adiciona os novos exercícios
+            const listaAtualizada = [...listaAtual, ...novosExercicios];
+            console.log('Nova lista de exercícios:', listaAtualizada);
+            
+            salvarLista(listaAtualizada);
+            console.log('Lista salva no localStorage');
+            
+            atualizarLista();
+            console.log('Lista de exercícios atualizada na interface');
+            
+            atualizarDropdown();
+            console.log('Dropdown de seleção de exercícios atualizado');
+            
+            alert(`Foram adicionados ${novosExercicios.length} exercício(s) com sucesso!`);
+            
+          } catch (error) {
+            console.error('Erro ao importar arquivo:', error);
+            alert('Erro ao importar arquivo: ' + (error.message || 'Formato inválido'));
+          } finally {
+            // Reseta o input para permitir importar o mesmo arquivo novamente
+            fileInput.value = '';
+            console.log('Input de arquivo resetado');
+          }
+        };
+        
+        reader.onerror = function(error) {
+          console.error('Erro ao ler o arquivo:', error);
+          alert('Erro ao ler o arquivo. Por favor, tente novamente.');
+          fileInput.value = '';
+        };
+        
+        reader.onabort = function() {
+          console.warn('Leitura do arquivo cancelada');
+          fileInput.value = '';
+        };
+        
+        console.log('Iniciando leitura do arquivo...');
+        reader.readAsText(file, 'UTF-8');
+      });
+      
+      console.log('Evento de mudança configurado no input de arquivo');
+    });
+
+    function adicionarExercicio() {
+      try {
+        const input = document.getElementById('novo-exercicio');
+        if (!input) {
+          console.error('Campo de novo exercício não encontrado');
+          return;
+        }
+        
+        const nome = input.value.trim();
+        if (!nome) {
+          console.warn('Nome do exercício não pode estar vazio');
+          return;
+        }
+        
+        // Get existing exercises or initialize empty array
+        const exercicios = JSON.parse(localStorage.getItem('exercicios') || '[]');
+        
+        // Check if exercise already exists (case insensitive)
+        const exercicioExistente = exercicios.some(ex => {
+          if (!ex) return false;
+          const nomeExistente = typeof ex === 'string' ? ex : (ex.nome || ex.name || '');
+          return nomeExistente.toLowerCase() === nome.toLowerCase();
+        });
+        
+        if (exercicioExistente) {
+          console.log('Exercício já existe na lista');
+          return;
+        }
+        
+        // Add new exercise (as a simple string for now)
+        exercicios.push(nome);
+        
+        // Save back to localStorage
+        localStorage.setItem('exercicios', JSON.stringify(exercicios));
+        
+        // Clear input
+        input.value = '';
+        
+        // Update both the dropdown and the Bootstrap list
+        if (typeof atualizarLista === 'function') {
+          atualizarLista();
+        } else {
+          console.error('Função atualizarLista não encontrada');
+        }
+        
+        // Focus the input for the next exercise
+        input.focus();
+        
+      } catch (error) {
+        console.error('Erro ao adicionar exercício:', error);
+      }
+    }
+    
+    // Enhanced atualizarLista function with better error handling
+    const originalAtualizarLista = window.atualizarLista || function() {
+      // Original implementation that updates the exercises dropdown
+      const ul = document.getElementById('lista-exercicios');
+      if (!ul) {
+        console.warn('Elemento #lista-exercicios não encontrado');
+        return;
+      }
+      
+      ul.innerHTML = ''; // Clear existing items
+      
+      try {
+        const exercicios = JSON.parse(localStorage.getItem('exercicios') || '[]');
+        exercicios.forEach(exercicio => {
+          if (!exercicio) return;
+          const nome = typeof exercicio === 'string' ? exercicio : (exercicio.nome || exercicio.name || '');
+          if (nome) {
+            const li = document.createElement('li');
+            li.textContent = nome;
+            li.onclick = function() {
+              document.getElementById('exercicio').value = nome;
+              ul.style.display = 'none';
+            };
+            ul.appendChild(li);
+          }
+        });
+      } catch (error) {
+        console.error('Erro ao carregar lista de exercícios:', error);
+      }
+    };
+    
+    // Wrap the original function with error handling
+    window.atualizarLista = function() {
+      try {
+        console.log('atualizarLista chamada');
+        originalAtualizarLista();
+        loadExercises(); // Also update the Bootstrap list
+      } catch (error) {
+        console.error('Error in atualizarLista:', error);
+        // Don't try to update the UI if we can't find the container
+      }
+    };
+    
+    function atualizarDropdown() {
+      const select = document.getElementById("exercicio-select");
+      select.innerHTML = '<option value="">-- Selecione --</option>';
+      const lista = carregarLista();
+      lista.forEach(ex => {
+        const opt = document.createElement("option");
+        opt.value = ex;
+        opt.textContent = ex;
+        select.appendChild(opt);
+      });
+    }
+
+    function atualizarLista() {
+      const ul = document.getElementById('lista-exercicios');
+      if (!ul) {
+        console.warn('Elemento #lista-exercicios não encontrado - pulando atualização da lista suspensa');
+        return;
+      }
+      
+      ul.innerHTML = ''; // Clear existing items
+      
+      const exercicios = JSON.parse(localStorage.getItem('exercicios') || '[]');
+      if (!Array.isArray(exercicios)) {
+        console.warn('Dados de exercícios inválidos no localStorage');
+        return;
+      }
+      
+      exercicios.forEach(exercicio => {
+        if (!exercicio) return;
+        const nome = typeof exercicio === 'string' ? exercicio : (exercicio.nome || exercicio.name || '');
+        if (nome) {
+          const li = document.createElement('li');
+          li.textContent = nome;
+          li.onclick = function() {
+            const exercicioInput = document.getElementById('exercicio');
+            if (exercicioInput) {
+              exercicioInput.value = nome;
+              ul.style.display = 'none';
+            }
+          };
+          ul.appendChild(li);
+        }
+      });
+    }
+    
+    function iniciarTreino() {
+      const select = document.getElementById("exercicio-select");
+      const exercicio = select.value;
+      if (!exercicio) return alert("Selecione um exercício.");
+      
+      exercicioAtual = exercicio;
+      execucoes = 0;  // Changed from 1 to 0 to start execution count at 0
+      repeticoes = null;
+      carga1 = null;
+      carga2 = null;
+      
+      // Set session date and start time on first exercise of the session
+      const now = new Date();
+      if (!dataSessao) {
+        dataSessao = now;
+        sessionStartTime = now;
+        
+        // Save session start message
+        const horaFormatada = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        const mensagemInicio = {
+          data: now.toISOString(),
+          mensagem: `Sessão iniciada`,
+          tipo: 'inicio_sessao',
+          dataFormatada: now.toLocaleString('pt-BR')
+        };
+        
+        const sessoes = JSON.parse(localStorage.getItem("sessoes") || '[]');
+        sessoes.unshift(mensagemInicio);
+        localStorage.setItem("sessoes", JSON.stringify(sessoes));
+        
+        // Update history display
+        atualizarHistoricoSessoes();
+      }
+      
+      document.getElementById("exec-count").textContent = execucoes;
+      document.getElementById("rep-count").value = repeticoes;
+      document.getElementById("carga1").value = carga1;
+      document.getElementById("carga2").value = '';
+      document.getElementById("exercicio-nome").textContent = exercicio;
+      document.getElementById("contadores").style.display = "block";
+    }
+
+    function incrementar(tipo) {
+      if (tipo === "exec") execucoes++;
+      if (tipo === "rep") repeticoes++;
+      document.getElementById("exec-count").textContent = execucoes;
+      document.getElementById("rep-count").value = repeticoes;
+    }
+
+    function atualizarContador(tipo, valor) {
+      // Convert empty string to 0 for calculations, but keep empty string for display
+      const numValor = valor === '' ? 0 : parseInt(valor) || 0;
+      if (tipo === "rep") {
+        repeticoes = valor === '' ? '' : numValor;
+        document.getElementById("rep-count").value = repeticoes;
+      }
+    }
+    
+    function atualizarCarga(tipo, valor) {
+      if (tipo === 'carga1') {
+        // Keep empty string for empty input, otherwise parse as float
+        carga1 = valor === '' ? '' : parseFloat(valor) || 0;
+        document.getElementById("carga1").value = carga1;
+      } else if (tipo === 'carga2') {
+        // Keep empty string for empty input, otherwise parse as float
+        carga2 = valor === '' ? '' : parseFloat(valor) || 0;
+        document.getElementById("carga2").value = carga2;
+      }
+    }
+
+    function salvarSessao(isFinal = false, mensagemConclusao = null) {
+      // Only check for current exercise if not finalizing
+      if (!isFinal && !exercicioAtual) return alert("Nenhum exercício em andamento.");
+      
+      // Use current time for the exercise, but maintain the session start time if it exists
+      const now = new Date();
+      const dataFormatada = now.toLocaleString('pt-BR');
+      
+      // Convert empty strings to 0 for storage to maintain backward compatibility
+      const sessao = {
+        data: now.toISOString(),
+        exercicio: exercicioAtual,
+        execucoes: execucoes,
+        repeticoes: repeticoes === '' ? 0 : repeticoes,
+        carga1: carga1 === '' ? 0 : carga1,
+        carga2: carga2 === '' ? null : carga2,
+        dataFormatada: dataFormatada,
+        tipo: 'sessao',  // Add type to identify session entries
+        // Store session start time separately for duration calculation
+        sessionStartTime: dataSessao ? dataSessao.toISOString() : now.toISOString()
+      };
+      
+      // Get existing sessions or initialize empty array
+      const sessoes = JSON.parse(localStorage.getItem("sessoes") || '[]');
+      sessoes.unshift(sessao); // Add to beginning of array to show newest first
+      
+      // Save to localStorage
+      localStorage.setItem("sessoes", JSON.stringify(sessoes));
+      
+      // Show success message
+      const mensagem = document.getElementById("sessao-salva");
+      mensagem.style.display = "block";
+      setTimeout(() => {
+        mensagem.style.display = "none";
+      }, 3000);
+      
+      // Update the displayed history
+      exibirHistoricoSessoes();
+      
+      // Only reset these values if this is not the final save
+      if (!isFinal) {
+        document.getElementById("exercicio-select").value = "";
+        document.getElementById("contadores").style.display = "none";
+        exercicioAtual = "";
+        // Don't reset dataSessao here to maintain session timing
+      }
+    }
+    
+    function exibirHistoricoSessoes() {
+      const historicoDiv = document.getElementById("historico-sessoes");
+      if (!historicoDiv) return;
+      
+      try {
+        // Get both current and historical sessions
+        const sessoesAtuais = JSON.parse(localStorage.getItem("sessoes") || "[]");
+        const historico = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
+        
+        // Combine all sessions (current + historical) and sort by date (oldest first)
+        const todasSessoes = [
+          ...sessoesAtuais,
+          ...historico
+        ].sort((a, b) => new Date(a.data) - new Date(b.data));
+        
+        // Clear and update history display
+        historicoDiv.innerHTML = '';
+      
+        if (todasSessoes.length === 0) {
+          historicoDiv.innerHTML = '<p style="margin: 0; color: #666; font-style: italic;">Nenhuma sessão salva ainda.</p>';
+          const exportButtons = document.getElementById('export-buttons');
+          if (exportButtons) exportButtons.style.display = 'none';
+          return;
+        } else {
+          const exportButtons = document.getElementById('export-buttons');
+          if (exportButtons) exportButtons.style.display = 'flex';
+        }
+        
+        // Group sessions by date
+        const sessoesPorData = {};
+        
+        // First group by date
+            const startTime = new Date(sessionStart.data);
+            const endTime = new Date(sessionEnd.data);
+            const durationMs = endTime - startTime;
+            const minutes = Math.floor(durationMs / 60000);
+            const seconds = Math.floor((durationMs % 60000) / 1000);
+            durationText = ` • Duração: ${minutes}m ${seconds}s`;
+          }
+          
+          // Only show session header if it's not auto-generated
+          if (session.find(e => e.tipo === 'inicio_sessao' && !e.autoGenerated)) {
+            const sessionHeader = document.createElement('div');
+            sessionHeader.style.display = 'flex';
+            sessionHeader.style.justifyContent = 'space-between';
+            sessionHeader.style.alignItems = 'center';
+            sessionHeader.style.marginBottom = '10px';
+            sessionHeader.style.padding = '8px';
+            sessionHeader.style.backgroundColor = '#e9ecef';
+            sessionHeader.style.borderRadius = '4px';
+            
+            sessionHeader.innerHTML = `
+              <div style="font-weight: bold; color: #007bff;">
+                <i class="fas fa-dumbbell"></i> Sessão ${sessionIndex + 1}${durationText}
+              </div>
+              <div style="font-size: 0.9em; color: #6c757d;">
+                ${sessionStart ? new Date(sessionStart.data).toLocaleTimeString('pt-BR') : ''}
+              </div>
+            `;
+            
+            sessionDiv.appendChild(sessionHeader);
+          }
+          
+          // Container for session entries
+          const entriesContainer = document.createElement('div');
+          entriesContainer.style.marginLeft = '10px';
+          
+          // Display each entry in the session
+          session.forEach((entry, entryIndex) => {
+            const entryDiv = document.createElement('div');
+            entryDiv.style.marginBottom = '5px';
+            entryDiv.style.padding = '8px';
+            entryDiv.style.backgroundColor = entryIndex % 2 === 0 ? '#f8f9fa' : '#ffffff';
+            entryDiv.style.borderRadius = '4px';
+            
+            const dataHora = new Date(entry.data).toLocaleTimeString('pt-BR');
+            
+            if (entry.tipo === 'inicio_sessao') {
+              // Only show session start if it's manually created by the user
+              if (!entry.autoGenerated) {
+                entryDiv.innerHTML = `
+                  <div style="color: #28a745; font-weight: bold;">
+                    <i class="fas fa-play-circle"></i> ${dataHora} - ${entry.mensagem || 'Sessão iniciada'}
+                  </div>
+                `;
+              } else {
+                // Skip auto-generated session starts
+                return;
+              }
+            } else if (entry.tipo === 'finalizacao') {
+              entryDiv.innerHTML = `
+                <div style="color: #dc3545; font-weight: bold;">
+                  <i class="fas fa-flag-checkered"></i> ${dataHora} - ${entry.mensagem || 'Término de treino'}
+                </div>
+              `;
+            } else {
+              entryDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div style="flex: 1;">
+                    <div style="font-weight: 500;">
+                      <i class="fas fa-dumbbell" style="color: #6c757d; margin-right: 5px;"></i>
+                      ${entry.exercicio}
+                    </div>
+                    <div style="margin-top: 5px; font-size: 0.9em; color: #6c757d;">
+                      <span style="display: inline-block; margin-right: 10px;">
+                        <i class="fas fa-redo" style="margin-right: 3px;"></i> ${entry.repeticoes || '--'} repetições
+                      </span>
+                      <span style="display: inline-block; margin-right: 10px;">
+                        <i class="fas fa-weight-hanging" style="margin-right: 3px;"></i> ${entry.carga1 || '--'} kg
+                      </span>
+                      ${entry.carga2 ? `
+                        <span style="display: inline-block; margin-right: 10px;">
+                          <i class="fas fa-weight" style="margin-right: 3px;"></i> ${entry.carga2} kg
+                        </span>
+                      ` : ''}
+                    </div>
+                  </div>
+                  <div style="color: #6c757d; font-size: 0.9em; text-align: right;">
+                    ${dataHora}
+                  </div>
+                </div>
+              `;
+            }
+            
+            entriesContainer.appendChild(entryDiv);
+          });
+          
+          sessionDiv.appendChild(entriesContainer);
+          
+          dataDiv.appendChild(sessionDiv);
+        });
+        
+        historicoDiv.appendChild(dataDiv);
+      });
+    }
+    
+    function exportarCSV() {
+      // Get all session data
+      const sessoesAtuais = JSON.parse(localStorage.getItem("sessoes") || "[]");
+      const historico = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
+      
+      // Combine all sessions (current + historical) and sort by date (oldest first)
+      const todasSessoes = [
+        ...sessoesAtuais,
+        ...historico
+      ].sort((a, b) => new Date(a.data) - new Date(b.data));
+      
+      // Create CSV header with additional fields
+      let csv = "Tipo;Data e Hora;Exercício;Execuções;Repetições;Carga 1 (kg);Carga 2 (kg);Duração;Observações\n";
+      
+      // Process sessions to group them properly
+      let currentSession = [];
+      const sessions = [];
+      
+      // Group entries into sessions
+      todasSessoes.forEach(entry => {
+        if (entry.tipo === 'inicio_sessao' && currentSession.length > 0) {
+          sessions.push([...currentSession]);
+          currentSession = [entry];
+        } else if (entry.tipo === 'finalizacao') {
+          currentSession.push(entry);
+          sessions.push([...currentSession]);
+          currentSession = [];
+        } else {
+          currentSession.push(entry);
+        }
+      });
+      
+      // Add the last session if it wasn't closed
+      if (currentSession.length > 0) {
+        sessions.push([...currentSession]);
+      }
+      
+      // Add each session to CSV
+      sessions.forEach((session, sessionIndex) => {
+        // Add session start marker
+        const startEntry = session.find(e => e.tipo === 'inicio_sessao') || session[0];
+        const endEntry = session.find(e => e.tipo === 'finalizacao');
+        
+        // Format session start time
+        const startTime = new Date(startEntry.data);
+        const startTimeFormatted = startTime.toLocaleString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        
+        // Add session header
+        csv += `"Sessão ${sessionIndex + 1} - Início";"${startTimeFormatted}";"--- INÍCIO DA SESSÃO ---";;;;"${startEntry.duracao || ''}";"${startEntry.mensagem || ''}"\n`;
+        
+        // Add exercises
+        session.forEach(entry => {
+          if (entry.tipo === 'sessao' && entry.exercicio) {
+            const data = new Date(entry.data);
+            const dataFormatada = data.toLocaleString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            });
+            
+            const carga1 = entry.carga1 !== null && entry.carga1 !== undefined ? entry.carga1 : '';
+            const carga2 = entry.carga2 !== null && entry.carga2 !== undefined ? entry.carga2 : '';
+            
+            csv += `"Exercício";"${dataFormatada}";"${entry.exercicio}";${entry.execucoes || ''};${entry.repeticoes || ''};${carga1};${carga2};;""\n`;
+          }
+        });
+        
+        // Add session footer if it has an end marker
+        if (endEntry) {
+          const endTime = new Date(endEntry.data);
+          const endTimeFormatted = endTime.toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          
+          // Calculate duration if not provided
+          let duration = endEntry.duracao;
+          if (!duration && endEntry.startTime) {
+            const start = new Date(endEntry.startTime);
+            const end = new Date(endEntry.data);
+            const diffMs = end - start;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffSecs = Math.floor((diffMs % 60000) / 1000);
+            duration = `${diffMins}:${diffSecs.toString().padStart(2, '0')}`;
+          }
+          
+          csv += `"Sessão ${sessionIndex + 1} - Término";"${endTimeFormatted}";"--- FIM DA SESSÃO ---";;;;"${duration || ''}";"${endEntry.mensagem || ''}"\n\n`;
+        } else {
+          csv += '\n';
+        }
+      });
+      
+      // Create and trigger download
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `historico_treino_completo_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+    }
+    
+    // Export to HTML (legacy function)
+    function exportarHTML(showCompletionMessage = false) {
+      exportToHTML();
+    }
+
+    function removerSessao(index) {
+      if (!confirm('Tem certeza que deseja excluir esta sessão?')) return;
+      
+      const sessoes = JSON.parse(localStorage.getItem("sessoes") || "[]");
+      if (index >= 0 && index < sessoes.length) {
+        sessoes.splice(index, 1);
+        localStorage.setItem("sessoes", JSON.stringify(sessoes));
+        exibirHistoricoSessoes();
+      }
+    }
+    
+    // Reset session start time when clearing all sessions
+    function limparSessoes() {
+      if (confirm('Tem certeza que deseja limpar todo o histórico de sessões?')) {
+        localStorage.removeItem('sessoes');
+        localStorage.removeItem('historicoSessoes');
+        sessionStartTime = null;
+        dataSessao = null;
+        atualizarHistoricoSessoes();
+        // Reset the stopwatch
+        clearInterval(stopwatchInterval);
+        seconds = 0;
+        document.getElementById('stopwatch').textContent = '00:00:00';
+        document.getElementById('startStop').innerHTML = '<i class="fas fa-play"></i>';
+        document.getElementById('laps').innerHTML = '';
+        isRunning = false;
+      }
+    }
+    
+    // Finalize workout and prepare PDF with completion message
+    function finalizarTreino() {
+      try {
+        // Get all sessions to check if there's any data to finalize
+        const sessoesParaFinalizar = JSON.parse(localStorage.getItem('sessoes') || '[]');
+        if (sessoesParaFinalizar.length === 0) {
+          alert('Nenhum exercício registrado nesta sessão.');
+          return;
+        }
+        
+        // Get existing historical sessions
+        const historicoSessoes = JSON.parse(localStorage.getItem('historicoSessoes') || '[]');
+        
+        // Find the first exercise in the current session to calculate duration
+        let firstExerciseTime = null;
+        if (sessoesParaFinalizar.length > 0) {
+          // Find the oldest exercise in the session
+          firstExerciseTime = sessoesParaFinalizar.reduce((earliest, current) => {
+            const currentTime = new Date(current.data);
+            return (!earliest || currentTime < earliest) ? currentTime : earliest;
+          }, null);
+          
+          // If we couldn't determine the first exercise time, use the current time
+          if (!firstExerciseTime) {
+            firstExerciseTime = sessionStartTime ? new Date(sessionStartTime) : new Date();
+          }
+        } else if (sessionStartTime) {
+          firstExerciseTime = new Date(sessionStartTime);
+        } else {
+          firstExerciseTime = new Date();
+        }
+        
+        // Calculate workout duration from first exercise to now
+        const endTime = new Date();
+        const durationMs = endTime - firstExerciseTime;
+        const durationSec = Math.floor(durationMs / 1000);
+        const duration = formatDuration(durationSec);
+        
+        // Add session end marker
+        const sessaoFinalizada = {
+          tipo: 'finalizacao',
+          data: endTime.toISOString(),
+          mensagem: 'Sessão finalizada',
+          duracao: duration,
+          dados: {
+            duracao: duration,
+            data: endTime.toISOString(),
+            exercicios: sessoesParaFinalizar
+          }
+        };
+        
+        // Add to history
+        historicoSessoes.push(sessaoFinalizada);
+        
+        // Save updated history
+        localStorage.setItem('historicoSessoes', JSON.stringify(historicoSessoes));
+        
+        // Clear current session
+        localStorage.setItem('sessoes', JSON.stringify([]));
+        
+        // Reset session start time if it exists
+        if (sessionStartTime) {
+          sessionStartTime = null;
+        }
+        
+        // Update UI
+        exibirHistoricoSessoes();
+        
+        // Show success message
+        alert('Sessão finalizada com sucesso!');
+        
+        // Get current date for statistics
+        const now = new Date();
+        const anoAtual = now.getFullYear();
+        const mesAtual = now.getMonth();
+        
+        // Get all sessions from history
+        const historico = JSON.parse(localStorage.getItem('historicoSessoes') || '[]');
+        
+        // Filter sessions from this week and month
+        const sessoesSemana = historico.filter(item => {
+          if (item.tipo !== 'finalizacao') return false;
+          const dataSessao = new Date(item.data);
+          return dataSessao >= inicioSemana;
+        });
+        
+        const sessoesMes = historico.filter(item => {
+          if (item.tipo !== 'finalizacao') return false;
+          const dataSessao = new Date(item.data);
+          return dataSessao.getMonth() === mesAtual && dataSessao.getFullYear() === anoAtual;
+        });
+        
+        // Add completion message for session history
+        const dataHora = now.toISOString();
+        const dataFormatada = now.toLocaleString('pt-BR');
+        
+        // Create completion message
+        const mensagemSessao = {
+          tipo: 'finalizacao',
+          data: dataHora,
+          dataFormatada: dataFormatada,
+          mensagem: 'Treino Finalizado',
+          duracao: duration,
+          startTime: firstExerciseTime.toISOString(),
+          endTime: dataHora,
+          treinoSemana: sessoesSemana.length + 1, // +1 for current session
+          treinoMes: sessoesMes.length + 1 // +1 for current session
+        };
+        
+        // Find the start session message in the current session
+        const startMessage = sessoesParaFinalizar.find(sessao => sessao.tipo === 'inicio_sessao');
+        
+        // Filter out start/end messages from the exercises
+        const exercisesOnly = sessoesParaFinalizar.filter(sessao => sessao.tipo === 'sessao');
+        
+        // Add exercises to history with proper type and formatted date
+        const sessoesParaHistorico = exercisesOnly.map(sessao => ({
+          ...sessao,
+          tipo: 'sessao',
+          dataFormatada: new Date(sessao.data).toLocaleString('pt-BR')
+        }));
+        
+        // Add the start message (if exists), exercises, and completion message to history
+        const novoHistorico = [
+          ...historico,
+          ...(startMessage ? [{
+            ...startMessage,
+            dataFormatada: new Date(startMessage.data).toLocaleString('pt-BR')
+          }] : []),
+          ...sessoesParaHistorico,
+          mensagemSessao
+        ];
+        
+        // Save the updated history
+        localStorage.setItem('historicoSessoes', JSON.stringify(novoHistorico));
+        
+        // Clear the current session
+        localStorage.setItem('sessoes', '[]');
+        dataSessao = null;
+        sessionStartTime = null;
+        
+        // Reset the stopwatch
+        clearInterval(stopwatchInterval);
+        seconds = 0;
+        document.getElementById('stopwatch').textContent = '00:00:00';
+        document.getElementById('startStop').innerHTML = '<i class="fas fa-play"></i>';
+        document.getElementById('laps').innerHTML = '';
+        isRunning = false;
+        
+        // Update the display
+        atualizarLista();
+        
+        // Refresh the history display - this will show the complete session with start message
+        atualizarHistoricoSessoes();
+        
+        // Scroll to the top of the history
+        const historicoDiv = document.getElementById("historico-sessoes");
+        if (historicoDiv) {
+          historicoDiv.scrollTop = 0;
+        }
+        
+        // Show completion message
+        alert(`Treino finalizado!\nDuração: ${duration}\nTreino #${sessoesSemana.length + 1} da semana\nTotal de treinos este mês: ${sessoesMes.length + 1}`);
+        
+        // Generate PDF with completion message
+        exportarHTML(true);
+        
+      } catch (error) {
+        console.error('Erro ao finalizar treino:', error);
+        alert('Ocorreu um erro ao finalizar o treino. Por favor, tente novamente.');
+      }
+    }
+    
+    // Stopwatch functionality
+    let stopwatchInterval;
+    let seconds = 0;
+    let isRunning = false;
+    
+    function formatDuration(totalSeconds) {
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    
+    function updateStopwatch() {
+      seconds++;
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      
+      document.getElementById('stopwatch').textContent = 
+        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    
+    // Initialize stopwatch event listeners when DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      const startStopBtn = document.getElementById('startStop');
+      const resetBtn = document.getElementById('reset');
+      const lapBtn = document.getElementById('lap');
+      const lapsContainer = document.getElementById('laps');
+      
+      if (startStopBtn) {
+        startStopBtn.addEventListener('click', function() {
+          if (isRunning) {
+            clearInterval(stopwatchInterval);
+            this.innerHTML = '<i class="fas fa-play"></i>';
+          } else {
+            stopwatchInterval = setInterval(updateStopwatch, 1000);
+            this.innerHTML = '<i class="fas fa-pause"></i>';
+          }
+          isRunning = !isRunning;
+        });
+      }
+      
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+          clearInterval(stopwatchInterval);
+          seconds = 0;
+          const stopwatchDisplay = document.getElementById('stopwatch');
+          if (stopwatchDisplay) stopwatchDisplay.textContent = '00:00:00';
+          if (startStopBtn) startStopBtn.innerHTML = '<i class="fas fa-play"></i>';
+          if (lapsContainer) lapsContainer.innerHTML = '';
+          isRunning = false;
+        });
+      }
+      
+      if (lapBtn && lapsContainer) {
+        lapBtn.addEventListener('click', function() {
+          if (seconds > 0) {
+            const stopwatchDisplay = document.getElementById('stopwatch');
+            if (stopwatchDisplay) {
+              const lapTime = stopwatchDisplay.textContent;
+              const lapElement = document.createElement('div');
+              lapElement.className = 'lap-time';
+              lapElement.textContent = `Volta ${lapsContainer.children.length + 1}: ${lapTime}`;
+              lapsContainer.prepend(lapElement);
+            }
+          }
+        });
+      }
+    }); // Close the DOMContentLoaded event listener
+    
+    // Safe initialization check for external libraries
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if jsPDF is loaded
+      if (typeof jsPDF === 'undefined') {
+        console.warn('jsPDF not loaded, HTML export will not work');
+        // You could show a user-friendly message or hide the HTML export button
+        const htmlButtons = document.querySelectorAll('[onclick*="exportarHTML"]');
+        htmlButtons.forEach(btn => {
+          btn.title = 'Export to HTML';
+          btn.disabled = false;
+        });
+      }
+    });
+    
+    // Error handling wrapper for all functions
+    function safeFunction(fn) {
+      return function(...args) {
+        try {
+          return fn.apply(this, args);
+        } catch (e) {
+          console.error(`Error in ${fn.name}:`, e);
+          // Show user-friendly error message
+          alert('Ocorreu um erro inesperado. Por favor, recarregue a página e tente novamente.');
+          return null;
+        }
+      };
+    }
+    
+    // Wrap all critical functions with error handling
+    const safeSalvarLista = safeFunction(salvarLista);
+    const safeCarregarLista = safeFunction(carregarLista);
+    const safeAtualizarLista = safeFunction(atualizarLista);
+    const safeSalvarSessao = safeFunction(salvarSessao);
+    
+    // Track workout start time
+    let workoutStartTime = new Date();
+    
+    // Initialize workout counters
+    function inicializarContadores() {
+      const hoje = new Date();
+      const inicioSemana = new Date(hoje);
+      inicioSemana.setDate(hoje.getDate() - hoje.getDay()); // Domingo da semana atual
+      
+      const mesAtual = hoje.getMonth();
+      const anoAtual = hoje.getFullYear();
+      
+      // Get all sessions
+      const sessoes = JSON.parse(localStorage.getItem('historicoSessoes') || '[]');
+      
+      // Filter sessions from this week and month
+      const sessoesSemana = sessoes.filter(sessao => {
+        const dataSessao = new Date(sessao.data);
+        return dataSessao >= inicioSemana;
+      });
+      
+      const sessoesMes = sessoes.filter(sessao => {
+        const dataSessao = new Date(sessao.data);
+        return dataSessao.getMonth() === mesAtual && dataSessao.getFullYear() === anoAtual;
+      });
+      
+      return {
+        numeroTreinoSemana: sessoesSemana.length + 1, // +1 for current session
+        totalTreinosMes: sessoesMes.length + 1 // +1 for current session
+      };
+    }
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        atualizarDropdown();
+        atualizarLista();
+        loadExercises();
+        
+        // Initialize session data if it doesn't exist
+        if (!localStorage.getItem('sessoes')) {
+          localStorage.setItem('sessoes', JSON.stringify([]));
+        }
+        if (!localStorage.getItem('historicoSessoes')) {
+          localStorage.setItem('historicoSessoes', JSON.stringify([]));
+        }
+        
+        // Show history when page loads
+        exibirHistoricoSessoes();
+        inicializarContadores();
+      } catch (error) {
+        console.error('Erro na inicialização:', error);
+      }
+    });
+  </script>
+
+  <script>
+    // Update the loadExercises function to maintain existing functionality
+    function loadExercises() {
+      console.log('loadExercises() called');
+      const container = document.getElementById('exercisesList');
+      if (!container) {
+        console.error('Exercises container not found');
+        return;
+      }
+
+      try {
+        // Get exercises from localStorage
+        const exercisesStr = localStorage.getItem('exercicios');
+        console.log('Raw exercises from localStorage:', exercisesStr);
+        
+        let exercises = [];
+        if (exercisesStr) {
+          try {
+            exercises = JSON.parse(exercisesStr);
+            console.log('Parsed exercises:', exercises);
+          } catch (e) {
+            console.error('Error parsing exercises:', e);
+            container.innerHTML = '<div class="alert alert-danger">Erro ao carregar exercícios</div>';
+            return;
+          }
+        }
+
+        // Check if exercises is an array
+        if (!Array.isArray(exercises) || exercises.length === 0) {
+          container.innerHTML = '<div class="text-muted p-3 text-center">Nenhum exercício cadastrado</div>';
+          return;
+        }
+
+        let html = '';
+        exercises.forEach((ex, index) => {
+          if (!ex) return;
+          
+          // Handle different exercise formats
+          let exerciseName = '';
+          if (typeof ex === 'string') {
+            exerciseName = ex;
+          } else if (ex && typeof ex === 'object') {
+            exerciseName = ex.nome || ex.name || ex.text || 'Exercício sem nome';
+          }
+          exerciseName = String(exerciseName || 'Exercício sem nome');
+          
+          // Create list item with just the delete button
+          html += `
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="exercise-name" title="${exerciseName.replace(/"/g, '&quot;')}">
+                  ${exerciseName}
+                </span>
+                <button class="btn btn-sm btn-outline-danger btn-delete-exercise" 
+                        onclick="removeExercise(${index}, event); return false;"
+                        title="Remover">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>`;
+        });
+        
+        container.innerHTML = html;
+        
+      } catch (error) {
+        console.error('Error in loadExercises:', error);
+        container.innerHTML = '<div class="alert alert-danger">Erro ao carregar a lista de exercícios</div>';
+      }
+    }
+
+    // Helper function to select an exercise
+    function selectExercise(exerciseName) {
+      try {
+        const exerciseInput = document.getElementById('exercicio');
+        if (exerciseInput) {
+          exerciseInput.value = exerciseName;
+          exerciseInput.focus();
+          
+          // Hide the exercises list
+          const collapse = document.getElementById('exercisesCollapse');
+          if (collapse) {
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+              bsCollapse.hide();
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error selecting exercise:', error);
+      }
+      return false;
+    }
+
+    // Function to remove an exercise
+    function removeExercise(index, event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      
+      if (!confirm('Tem certeza que deseja remover este exercício?')) {
+        return false;
+      }
+      
+      try {
+        const exercises = JSON.parse(localStorage.getItem('exercicios') || '[]');
+        if (Array.isArray(exercises) && index >= 0 && index < exercises.length) {
+          exercises.splice(index, 1);
+          localStorage.setItem('exercicios', JSON.stringify(exercises));
+          
+          // Update both the dropdown and the Bootstrap list
+          if (typeof atualizarLista === 'function') {
+            atualizarLista();
+          } else {
+            loadExercises(); // Fallback to just reload the exercises list
+          }
+        }
+      } catch (error) {
+        console.error('Error removing exercise:', error);
+      }
+      
+      return false;
+    }
+  </script>
+</body>
+</html>

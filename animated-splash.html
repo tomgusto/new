@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Splash Screen Examples</title>
+    <style>
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1, h2 {
+            color: #2c3e50;
+            margin: 20px 0;
+        }
+        
+        .example {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            background: #f9f9f9;
+        }
+        
+        .animation-container {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 4px;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* CSS Animation Example */
+        .css-animation .logo {
+            width: 100px;
+            height: 100px;
+            background: #3498db;
+            border-radius: 50%;
+            animation: pulse 2s infinite, rotate 4s linear infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(0.95); }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Lottie Container */
+        #lottie-container {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* GSAP Example */
+        .gsap-box {
+            width: 80px;
+            height: 80px;
+            background: #e74c3c;
+            border-radius: 8px;
+        }
+        
+        /* SVG Animation */
+        .svg-logo {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .svg-circle {
+            fill: #2ecc71;
+            transform-origin: center;
+            animation: svgPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes svgPulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.7; }
+        }
+        
+        /* Three.js Container */
+        #threejs-container {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Code Blocks */
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e1e1e;
+            padding: 5px 10px;
+            border-radius: 4px 4px 0 0;
+            color: #9e9e9e;
+            font-size: 12px;
+        }
+        
+        .code-container {
+            margin: 15px 0;
+        }
+        
+        .tab {
+            padding-left: 20px;
+        }
+    </style>
+    
+    <!-- Lottie Animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"></script>
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <h1>Animated Splash Screen Examples</h1>
+    
+    <!-- CSS Animation Example -->
+    <div class="example">
+        <h2>1. Pure CSS Animation</h2>
+        <p>Lightweight and simple animations using only CSS.</p>
+        
+        <div class="animation-container">
+            <div class="logo"></div>
+        </div>
+        
+        <div class="code-container">
+            <div class="code-header">
+                <span>HTML</span>
+                <button onclick="copyCode('css-html')">Copy</button>
+            </div>
+            <pre id="css-html"><code>&lt;div class="splash-screen"&gt;
+  &lt;div class="logo"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+            
+            <div class="code-header">
+                <span>CSS</span>
+                <button onclick="copyCode('css-css')">Copy</button>
+            </div>
+            <pre id="css-css"><code>.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  z-index: 1000;
+  animation: fadeOut 0.5s ease-out 2.5s forwards;
+}
+
+.logo {
+  width: 100px;
+  height: 100px;
+  background: #3498db;
+  border-radius: 50%;
+  animation: 
+    pulse 2s infinite,
+    rotate 4s linear infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(0.95); }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; visibility: hidden; }
+}</code></pre>
+        </div>
+    </div>
+    
+    <!-- Lottie Animation Example -->
+    <div class="example">
+        <h2>2. Lottie Animation</h2>
+        <p>High-quality animations exported from After Effects. Lightweight and scalable.</p>
+        
+        <div class="animation-container">
+            <div id="lottie-container"></div>
+        </div>
+        
+        <div class="code-container">
+            <div class="code-header">
+                <span>HTML</span>
+                <button onclick="copyCode('lottie-html')">Copy</button>
+            </div>
+            <pre id="lottie-html"><code>&lt;div class="splash-screen"&gt;
+  &lt;div id="lottie-animation"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"&gt;&lt;/script&gt;</code></pre>
+            
+            <div class="code-header">
+                <span>JavaScript</span>
+                <button onclick="copyCode('lottie-js')">Copy</button>
+            </div>
+            <pre id="lottie-js"><code>const animation = lottie.loadAnimation({
+  container: document.getElementById('lottie-animation'),
+  renderer: 'svg',
+  loop: true,
+  autoplay: true,
+  path: 'animation.json' // Path to your Lottie JSON
+});
+
+// Hide splash screen when animation completes
+animation.addEventListener('DOMLoaded', function() {
+  setTimeout(() => {
+    document.querySelector('.splash-screen').style.opacity = 0;
+    setTimeout(() => {
+      document.querySelector('.splash-screen').style.display = 'none';
+    }, 500);
+  }, 2500);
+});</code></pre>
+        </div>
+    </div>
+    
+    <!-- GSAP Animation Example -->
+    <div class="example">
+        <h2>3. GSAP Animation</h2>
+        <p>Professional-grade animations with precise control and excellent performance.</p>
+        
+        <div class="animation-container">
+            <div class="gsap-box"></div>
+        </div>
+        
+        <div class="code-container">
+            <div class="code-header">
+                <span>HTML</span>
+                <button onclick="copyCode('gsap-html')">Copy</button>
+            </div>
+            <pre id="gsap-html"><code>&lt;div class="splash-screen"&gt;
+  &lt;div class="logo"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"&gt;&lt;/script&gt;</code></pre>
+            
+            <div class="code-header">
+                <span>JavaScript</span>
+                <button onclick="copyCode('gsap-js')">Copy</button>
+            </div>
+            <pre id="gsap-js"><code>// Create timeline
+const tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
+
+tl.from(".logo", {
+  duration: 0.8,
+  scale: 0.5,
+  opacity: 0,
+  y: 50,
+  rotation: -180
+})
+.to(".logo", {
+  duration: 0.8,
+  scale: 1.2,
+  y: -20,
+  rotation: 0,
+  ease: "back.out(1.7)"
+})
+.to(".logo", {
+  duration: 0.5,
+  scale: 1,
+  y: 0
+});
+
+// Hide splash screen
+tl.to(".splash-screen", {
+  duration: 0.5,
+  opacity: 0,
+  onComplete: () => {
+    document.querySelector(".splash-screen").style.display = "none";
+  }
+}, "+=1");</code></pre>
+        </div>
+    </div>
+    
+    <!-- SVG Animation Example -->
+    <div class="example">
+        <h2>4. SVG Animation</h2>
+        <p>Resolution-independent vector animations that scale perfectly on any device.</p>
+        
+        <div class="animation-container">
+            <svg class="svg-logo" viewBox="0 0 100 100">
+                <circle class="svg-circle" cx="50" cy="50" r="40" />
+            </svg>
+        </div>
+        
+        <div class="code-container">
+            <div class="code-header">
+                <span>HTML</span>
+                <button onclick="copyCode('svg-html')">Copy</button>
+            </div>
+            <pre id="svg-html"><code>&lt;div class="splash-screen"&gt;
+  &lt;svg class="logo" viewBox="0 0 100 100"&gt;
+    &lt;circle class="circle" cx="50" cy="50" r="40" /&gt;
+  &lt;/svg&gt;
+&lt;/div&gt;</code></pre>
+            
+            <div class="code-header">
+                <span>CSS</span>
+                <button onclick="copyCode('svg-css')">Copy</button>
+            </div>
+            <pre id="svg-css"><code>.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  z-index: 1000;
+}
+
+.logo {
+  width: 100px;
+  height: 100px;
+}
+
+.circle {
+  fill: #2ecc71;
+  transform-origin: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.7; }
+}</code></pre>
+        </div>
+    </div>
+    
+    <!-- Three.js Animation Example -->
+    <div class="example">
+        <h2>5. Three.js 3D Animation</h2>
+        <p>For advanced 3D animations (more resource-intensive).</p>
+        
+        <div class="animation-container">
+            <div id="threejs-container"></div>
+        </div>
+        
+        <div class="code-container">
+            <div class="code-header">
+                <span>HTML</span>
+                <button onclick="copyCode('threejs-html')">Copy</button>
+            </div>
+            <pre id="threejs-html"><code>&lt;div class="splash-screen"&gt;
+  &lt;div id="threejs-container"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"&gt;&lt;/script&gt;</code></pre>
+            
+            <div class="code-header">
+                <span>JavaScript</span>
+                <button onclick="copyCode('threejs-js')">Copy</button>
+            </div>
+            <pre id="threejs-js"><code>// Initialize Three.js
+const container = document.getElementById('threejs-container');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+renderer.setSize(container.clientWidth, container.clientHeight);
+container.appendChild(renderer.domElement);
+
+// Create a cube
+const geometry = new THREE.BoxGeometry();
+const material = new THREE.MeshBasicMaterial({ 
+  color: 0x3498db,
+  wireframe: true
+});
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+camera.position.z = 2;
+
+// Animation loop
+function animate() {
+  requestAnimationFrame(animate);
+  
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
+  
+  renderer.render(scene, camera);
+}
+
+// Handle window resize
+window.addEventListener('resize', () => {
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+});
+
+// Hide splash screen after delay
+setTimeout(() => {
+  document.querySelector('.splash-screen').style.opacity = 0;
+  setTimeout(() => {
+    document.querySelector('.splash-screen').style.display = 'none';
+  }, 500);
+}, 3000);
+
+// Start animation
+animate();</code></pre>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize Lottie animation
+        const lottieAnimation = lottie.loadAnimation({
+            container: document.getElementById('lottie-container'),
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: 'https://assets8.lottiefiles.com/packages/lf20_raiw2hpe.json' // Sample animation
+        });
+        
+        // Initialize GSAP animation
+        gsap.to(".gsap-box", {
+            duration: 2,
+            x: 100,
+            rotation: 360,
+            scale: 1.5,
+            ease: "power2.inOut",
+            yoyo: true,
+            repeat: -1
+        });
+        
+        // Initialize Three.js if container exists
+        if (document.getElementById('threejs-container')) {
+            const container = document.getElementById('threejs-container');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            const geometry = new THREE.TorusGeometry(0.8, 0.2, 16, 100);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x3498db,
+                wireframe: true
+            });
+            const torus = new THREE.Mesh(geometry, material);
+            scene.add(torus);
+            
+            camera.position.z = 2;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                torus.rotation.x += 0.01;
+                torus.rotation.y += 0.01;
+                renderer.render(scene, camera);
+            }
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+            
+            animate();
+        }
+        
+        // Copy code to clipboard
+        function copyCode(id) {
+            const code = document.getElementById(id).textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

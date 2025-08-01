@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="pt-br" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciador de Treino</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#007bff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Gerenciador de Treino">
+  <meta name="apple-mobile-web-app-title" content="Workout App">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com; img-src 'self' data:;">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f4f4f4;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      -webkit-text-size-adjust: 100%;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0.8em;
+      background: white;
+      min-height: 100vh;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 0.5em;
+      }
+      
+      h1 {
+        font-size: 1.5em;
+        margin: 0.5em 0;
+      }
+      
+      .contador-input {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .contador-input label {
+        margin-bottom: 5px;
+        text-align: left;
+        min-width: auto;
+      }
+      
+      .contador-input input {
+        width: 100%;
+        margin: 5px 0;
+      }
+      
+      .contador-btn {
+        width: 100%;
+        margin: 5px 0;
+      }
+      
+      button, input, select {
+        font-size: 16px; /* Prevents iOS zoom on focus */
+      }
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 0.8em;
+      margin: 0.5em 0;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    /* Stopwatch Styles */
+    .stopwatch-container {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    #stopwatch {
+      font-size: 2em;
+      font-family: monospace;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #007BFF;
+    }
+    
+    .stopwatch-controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 10px 0;
+    }
+    
+    .stopwatch-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      background: #007BFF;
+      color: white;
+      font-size: 1.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .stopwatch-btn:active {
+      transform: scale(0.95);
+    }
+    
+    #startStop {
+      background: #28a745;
+    }
+    
+    #reset {
+      background: #dc3545;
+    }
+    
+    #lap {
+      background: #ffc107;
+      color: #212529;
+    }
+    
+    .laps-container {
+      margin-top: 15px;
+      max-height: 150px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .lap-time {
+      padding: 8px;
+      margin: 5px 0;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    /* Base button styles */
+    .action-button {
+      width: 100%;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+      margin: 5px 0;
+      text-align: center;
+      transition: all 0.2s;
+      box-sizing: border-box;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 500;
+      text-transform: none;
+      line-height: 1.2;
+      white-space: nowrap;
+      vertical-align: middle;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    
+    /* Save Exercise Button */
+    .action-button.save-exercise-btn {
+      background-color: #28a745;
+      color: white;
+    }
+    .action-button.save-exercise-btn:hover {
+      background-color: #218838;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Export Buttons */
+    .action-button.export-csv-btn,
+    .action-button.export-html-btn,
+    .action-button.add-exercise-btn,
+    .action-button.start-execution-btn {
+      background-color: #007bff;
+      color: white;
+    }
+    .action-button.export-csv-btn:hover,
+    .action-button.export-html-btn:hover,
+    .action-button.add-exercise-btn:hover,
+    .action-button.start-execution-btn:hover {
+      background-color: #0056b3;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Danger Buttons */
+    .action-button.end-session-btn,
+    .action-button.clear-history-btn {
+      background-color: #dc3545;
+      color: white;
+    }
+    .action-button.end-session-btn:hover,
+    .action-button.clear-history-btn:hover {
+      background-color: #c82333;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Ensure all buttons have the same visual weight */
+    button {
+      font-family: inherit;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: none;
+      cursor: pointer;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    .contadores {
+      display: none;
+      text-align: center;
+      margin-top: 1em;
+    }
+    .contador-btn {
+      width: 100%;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+      margin: 5px 0;
+      text-align: center;
+      transition: all 0.2s;
+      box-sizing: border-box;
+      background-color: #007bff;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .contador-btn:hover {
+      background-color: #0056b3;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .contador-input {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    .contador-input label {
+      margin-right: 10px;
+      min-width: 100px;
+      text-align: right;
+    }
+    .contador-input input {
+      width: 80px;
+      text-align: center;
+      margin: 0 5px;
+    }
+    #lista-exercicios {
+      list-style: none;
+      padding: 0;
+    }
+    #lista-exercicios li {
+      padding: 0.4em;
+      background: #ddd;
+      margin: 0.3em 0;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .remover {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .remover:hover {
+      background: #c82333;
+    }
+    
+    .export-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .export-btn:first-child {
+      background-color: #28a745;
+    }
+    
+    .export-btn:first-child:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+  <h1>🏋️ Gerenciador de Treino</h1>
+  <div class="stopwatch-container">
+    <div id="stopwatch">00:00:00</div>
+    <div class="stopwatch-controls">
+      <button id="startStop" class="stopwatch-btn"><i class="fas fa-play"></i></button>
+      <button id="reset" class="stopwatch-btn"><i class="fas fa-redo"></i></button>
+      <button id="lap" class="stopwatch-btn"><i class="fas fa-flag"></i></button>
+    </div>
+    <div id="laps" class="laps-container"></div>
+  </div>
+
+  <!-- Seleção -->
+  <form onsubmit="event.preventDefault(); iniciarTreino();">
+    <label for="exercicio-select">Selecionar exercício:</label>
+    <select id="exercicio-select" required>
+      <option value="">-- Selecione --</option>
+    </select>
+    <button type="submit" class="action-button start-execution-btn">Iniciar Execução</button>
+  </form>
+
+  <!-- Contadores -->
+  <div id="contadores" class="contadores">
+    <h2 id="exercicio-nome"></h2>
+    
+    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin: 15px 0;">
+      <button class="contador-btn" onclick="incrementar('exec')" style="width: auto; min-width: 120px;">+ Execução</button>
+      <span style="font-size: 1.1em;">Execuções: <strong id="exec-count">0</strong></span>
+    </div>
+    
+    <div class="contador-input">
+      <label for="rep-count">Repetições:</label>
+      <input type="number" id="rep-count" value="0" min="0" onchange="atualizarContador('rep', this.value)">
+    </div>
+    
+    <div class="contador-input">
+      <label for="carga1">Carga 1 (kg):</label>
+      <input type="number" id="carga1" value="0" min="0" step="0.5" onchange="atualizarCarga('carga1', this.value)">
+    </div>
+    
+    <div class="contador-input">
+      <label for="carga2">Carga 2 (kg):</label>
+      <input type="number" id="carga2" min="0" step="0.5" onchange="atualizarCarga('carga2', this.value)">
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+      <button type="button" onclick="salvarSessao()" class="action-button save-exercise-btn">
+        <i class="fas fa-save"></i> Salvar Exercício
+      </button>
+      <button type="button" onclick="finalizarSessao()" class="action-button end-session-btn">
+        <i class="fas fa-flag-checkered"></i> Finalizar Sessão
+      </button>
+    </div>
+    <div id="sessao-salva" style="display: none; margin: 10px 0; padding: 10px; background: #e8f5e9; color: #2e7d32; border-radius: 4px;">
+      Exercício salvo com sucesso!
+    </div>
+  </div>
+  
+  <!-- Histórico de Sessões -->
+  <div id="historico-container" style="margin-top: 30px;">
+    <h2>Histórico de Sessões</h2>
+    <div id="historico-sessoes" style="max-height: 500px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: white; min-height: 60px; margin-bottom: 15px;">
+      <p style="margin: 0; color: #666; font-style: italic;">Nenhuma sessão salva ainda.</p>
+    </div>
+    
+    <div style="margin-top: 15px;">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="action-button end-session-btn" onclick="finalizarSessao()" style="width: 100%;">
+          <i class="fas fa-flag-checkered"></i> Finalizar Sessão
+        </button>
+        <div style="margin: 10px 0; border-top: 1px solid #eee;"></div>
+        <button class="action-button export-csv-btn" onclick="exportarCSV()" style="width: 100%;">
+          <i class="fas fa-file-csv"></i> Exportar CSV
+        </button>
+        <button class="action-button export-html-btn" onclick="exportarHTML()" style="width: 100%;">
+          <i class="fas fa-file-code"></i> Exportar HTML
+        </button>
+        <button class="action-button clear-history-btn" onclick="limparHistorico()" style="width: 100%;">
+          <i class="fas fa-trash-alt"></i> Limpar Histórico
+        </button>
+      </div>
+    </div>
+
+  <!-- Cadastro -->
+  <h2>Cadastrar Novo Exercício</h2>
+  <input type="text" id="novo-exercicio" placeholder="Nome do exercício">
+  <button class="action-button add-exercise-btn" onclick="adicionarExercicio()">Adicionar</button>
+
+  <!-- Lista -->
+  <h2>Exercícios Cadastrados</h2>
+  <ul id="lista-exercicios"></ul>
+
+  <script>
+    let execucoes = 0;
+    let repeticoes = '';
+    let carga1 = '';
+    let carga2 = '';
+    let exercicioAtual = "";
+    let dataSessao = null;
+    let historicoTreino = [];
+
+    function salvarLista(lista) {
+      localStorage.setItem("exercicios", JSON.stringify(lista));
+    }
+
+    function carregarLista() {
+      return JSON.parse(localStorage.getItem("exercicios")) || [];
+    }
+
+    function atualizarDropdown() {
+      const select = document.getElementById("exercicio-select");
+      select.innerHTML = '<option value="">-- Selecione --</option>';
+      const lista = carregarLista();
+      lista.forEach(ex => {
+        // Ensure exercise is a string
+        const exerciseName = typeof ex === 'object' ? (ex.nome || JSON.stringify(ex)) : String(ex);
+        const opt = document.createElement("option");
+        opt.value = exerciseName;
+        opt.textContent = exerciseName;
+        select.appendChild(opt);
+      });
+    }
+
+    function atualizarLista() {
+      const ul = document.getElementById("lista-exercicios");
+      ul.innerHTML = "";
+      const lista = carregarLista();
+      lista.forEach((ex, i) => {
+        // Ensure exercise is a string for display
+        const exerciseName = typeof ex === 'object' ? (ex.nome || JSON.stringify(ex)) : String(ex);
+        
+        const li = document.createElement("li");
+        li.textContent = exerciseName;
+        
+        const btn = document.createElement("button");
+        btn.textContent = "x";
+        btn.className = "remover";
+        btn.onclick = () => {
+          lista.splice(i, 1);
+          // Save the cleaned list (ensuring all entries are strings)
+          const cleanedList = lista.map(item => 
+            typeof item === 'object' ? (item.nome || JSON.stringify(item)) : String(item)
+          );
+          salvarLista(cleanedList);
+          atualizarLista();
+          atualizarDropdown();
+        };
+        li.appendChild(btn);
+        ul.appendChild(li);
+      });
+    }
+
+    function adicionarExercicio() {
+      const nome = document.getElementById("novo-exercicio").value.trim();
+      if (!nome) return;
+      
+      // Ensure the name is a string
+      const exerciseName = String(nome);
+      
+      const lista = carregarLista();
+      
+      // Check if exercise already exists (case-insensitive)
+      const exists = lista.some(ex => {
+        const existingName = typeof ex === 'string' ? ex : (ex.nome || JSON.stringify(ex));
+        return existingName.toLowerCase() === exerciseName.toLowerCase();
+      });
+      
+      if (!exists) {
+        lista.push(exerciseName);
+        salvarLista(lista);
+        atualizarLista();
+        atualizarDropdown();
+        document.getElementById("novo-exercicio").value = "";
+      } else {
+        alert("Este exercício já existe na lista.");
+      }
+    }
+
+    function iniciarTreino() {
+      const select = document.getElementById("exercicio-select");
+      let nome = select.value;
+      if (!nome) return alert("Selecione um exercício.");
+      
+      // Ensure the name is a string and not an object
+      if (typeof nome === 'object') {
+        nome = nome.nome || nome.toString();
+      } else {
+        nome = String(nome);
+      }
+      
+      exercicioAtual = nome;
+      execucoes = 0;
+      repeticoes = '';
+      carga1 = '';
+      carga2 = '';
+      
+      // Clear form
+      document.getElementById('exercicio-select').value = '';
+      document.getElementById("exec-count").textContent = execucoes;
+      document.getElementById("rep-count").value = '';
+      document.getElementById("carga1").value = '';
+      document.getElementById("carga2").value = '';
+      document.getElementById("exercicio-nome").textContent = nome;
+      document.getElementById("contadores").style.display = "block";
+      
+      // Set session date/time only if not already set
+      if (!dataSessao) {
+        dataSessao = new Date();
+      }
+    }
+
+    function incrementar(tipo) {
+      if (tipo === "exec") execucoes++;
+      if (tipo === "rep") repeticoes++;
+      document.getElementById("exec-count").textContent = execucoes;
+      document.getElementById("rep-count").value = repeticoes;
+    }
+
+    function atualizarContador(tipo, valor) {
+      valor = parseInt(valor) || 0;
+      if (tipo === "rep") repeticoes = valor;
+      document.getElementById("rep-count").value = repeticoes;
+    }
+    
+    function atualizarCarga(tipo, valor) {
+      if (tipo === 'carga1') {
+        carga1 = parseFloat(valor) || 0;
+        document.getElementById("carga1").value = carga1;
+      } else if (tipo === 'carga2') {
+        carga2 = valor === '' ? null : parseFloat(valor);
+        document.getElementById("carga2").value = carga2 === null ? '' : carga2;
+      }
+    }
+
+    function salvarSessao() {
+      if (!exercicioAtual) return alert("Nenhum exercício em andamento.");
+      
+      const dataAtual = new Date();
+      const dataAtualFormatada = dataAtual.toLocaleDateString('pt-BR');
+      const sessionEnded = localStorage.getItem(`sessionEnded_${dataAtualFormatada}`) === 'true';
+      
+      // If previous session was ended, start a new one
+      if (sessionEnded) {
+        // Clear the session ended flag for the current date
+        localStorage.removeItem(`sessionEnded_${dataAtualFormatada}`);
+        // Reset the end session button
+        const endSessionBtn = document.querySelector('.finalizar-btn');
+        if (endSessionBtn) {
+          endSessionBtn.disabled = false;
+          endSessionBtn.style.opacity = '1';
+          endSessionBtn.style.cursor = 'pointer';
+        }
+        // Show new session started message
+        const successMsg = document.getElementById('sessao-salva');
+        successMsg.textContent = 'Nova sessão iniciada!';
+        successMsg.style.display = 'block';
+        successMsg.style.backgroundColor = '#e6f7ff';
+        successMsg.style.color = '#1890ff';
+        setTimeout(() => { successMsg.style.display = 'none'; }, 3000);
+      }
+      
+      // Use the current time for the session
+      const dataSessaoAtual = dataSessao || new Date();
+      const dataFormatada = dataSessaoAtual.toLocaleString('pt-BR');
+      
+      // Generate a session ID if this is a new session
+      const sessionId = sessionEnded ? Date.now().toString() : 
+                        (localStorage.getItem('currentSessionId') || Date.now().toString());
+      
+      // Store the current session ID
+      localStorage.setItem('currentSessionId', sessionId);
+      
+      // Ensure exercicioAtual is a string and not an object
+      const exercicioNome = typeof exercicioAtual === 'object' ? 
+                           (exercicioAtual.nome || exercicioAtual.toString()) : 
+                           String(exercicioAtual);
+      
+      const sessao = {
+        data: dataSessaoAtual.toISOString(),
+        exercicio: exercicioNome,  // Use the properly formatted exercise name
+        execucoes: execucoes,
+        repeticoes: repeticoes,
+        carga1: carga1,
+        carga2: carga2,
+        dataFormatada: dataFormatada,
+        sessionId: sessionId  // Add session ID to track session boundaries
+      };
+      
+      // Get existing sessions or initialize empty array
+      const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes")) || [];
+      historicoSessoes.unshift(sessao); // Add to beginning of array to show newest first
+      
+      // Save to localStorage
+      localStorage.setItem("historicoSessoes", JSON.stringify(historicoSessoes));
+      
+      // Show success message
+      const successMsg = document.getElementById('sessao-salva');
+      successMsg.textContent = 'Exercício salvo com sucesso!';
+      successMsg.style.display = 'block';
+      setTimeout(() => {
+        successMsg.style.display = 'none';
+      }, 3000);
+      
+      // Update the displayed history
+      exibirHistoricoSessoes();
+      
+      // Reset for next exercise
+      document.getElementById("exercicio-select").value = "";
+      document.getElementById("contadores").style.display = "none";
+      exercicioAtual = "";
+      dataSessao = null; // Reset session date for next session
+    }
+    
+    function finalizarSessao() {
+      // Get current session ID
+      const currentSessionId = localStorage.getItem('currentSessionId');
+      if (!currentSessionId) {
+        mostrarMensagem('Nenhuma sessão ativa para finalizar.', 'info');
+        return;
+      }
+      
+      // Get current sessions
+      const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
+      const currentSessionExercises = historicoSessoes.filter(s => s.sessionId === currentSessionId && !s.isSessionEnd);
+      
+      if (currentSessionExercises.length === 0) {
+        mostrarMensagem('Nenhum exercício encontrado nesta sessão.', 'info');
+        return;
+      }
+      
+      // Add session end marker to the sessions array
+      const now = new Date();
+      const sessionEndMarker = {
+        isSessionEnd: true,
+        sessionId: currentSessionId,
+        data: now.toISOString(),
+        dataFormatada: now.toLocaleString('pt-BR')
+      };
+      
+      // Remove any existing end marker for this session
+      const updatedSessoes = historicoSessoes.filter(s => !(s.sessionId === currentSessionId && s.isSessionEnd));
+      updatedSessoes.push(sessionEndMarker);
+      localStorage.setItem("historicoSessoes", JSON.stringify(updatedSessoes));
+      
+      // Mark this session as ended
+      const endedSessions = JSON.parse(localStorage.getItem('endedSessions') || '{}');
+      endedSessions[currentSessionId] = true;
+      localStorage.setItem('endedSessions', JSON.stringify(endedSessions));
+      
+      // Clear current session ID to force new session on next save
+      localStorage.removeItem('currentSessionId');
+      
+      // Update the UI immediately
+      mostrarMensagem('Sessão finalizada com sucesso!', 'success');
+      exibirHistoricoSessoes();
+      
+      // Scroll to show the session end message
+      setTimeout(() => {
+        const historicoDiv = document.getElementById('historico-sessoes');
+        if (historicoDiv) {
+          historicoDiv.scrollTop = historicoDiv.scrollHeight;
+        }
+      }, 50);
+    }
+    
+    function exibirHistoricoSessoes() {
+      const historicoDiv = document.getElementById("historico-sessoes");
+      const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes")) || [];
+      
+      if (historicoSessoes.length === 0) {
+        historicoDiv.innerHTML = "<p style=\"margin: 0; color: #666; font-style: italic;\">Nenhuma sessão salva ainda.</p>";
+        return;
+      }
+      
+      // Group sessions by date and session ID
+      const sessoesPorData = {};
+      const endedSessions = JSON.parse(localStorage.getItem('endedSessions') || '{}');
+      
+      // First, group by date and session ID
+      historicoSessoes.forEach((sessao, index) => {
+        const dataKey = new Date(sessao.data).toLocaleDateString('pt-BR');
+        const sessionId = sessao.sessionId || 'default';
+        
+        if (!sessoesPorData[dataKey]) {
+          sessoesPorData[dataKey] = {};
+        }
+        if (!sessoesPorData[dataKey][sessionId]) {
+          sessoesPorData[dataKey][sessionId] = [];
+        }
+        
+        // Add index to the session for deletion
+        sessao.originalIndex = index;
+        sessoesPorData[dataKey][sessionId].push(sessao);
+      });
+      
+      let html = '';
+      
+      // Process each date
+      for (const [data, sessionsByDate] of Object.entries(sessoesPorData)) {
+        html += `
+          <div style="margin-bottom: 25px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-weight: bold; color: #333; margin-bottom: 8px; font-size: 1.1em;">${data}</div>
+            <div style="border-top: 1px solid #eee; margin: 8px 0 12px 0;"></div>
+        `;
+        
+        // Process each session within the date
+        for (const [sessionId, sessoesDoDia] of Object.entries(sessionsByDate)) {
+          // Separate exercises from session end markers
+          const exercises = [];
+          const endMarkers = [];
+          
+          // First, separate exercises and end markers
+          sessoesDoDia.forEach(sessao => {
+            if (sessao.isSessionEnd) {
+              endMarkers.push(sessao);
+            } else {
+              exercises.push(sessao);
+            }
+          });
+          
+          if (exercises.length === 0) continue; // Skip if no exercises in this session
+          
+          // Sort exercises by time (oldest first)
+          exercises.sort((a, b) => new Date(a.data) - new Date(b.data));
+          // Sort end markers by time (newest first)
+          endMarkers.sort((a, b) => new Date(b.data) - new Date(a.data));
+          
+          // Add session start message
+          const primeiraSessao = exercises[0];
+          const horaInicio = new Date(primeiraSessao.data).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+          
+          html += `
+            <div style="margin-bottom: 15px;">
+              <div style="color: #1890ff; margin-bottom: 12px; padding: 8px 12px; background-color: #e6f7ff; border-left: 3px solid #1890ff; border-radius: 2px;">
+                🕒 ${horaInicio} - Sessão Iniciada
+              </div>
+          `;
+          
+          // Add exercises
+          exercises.forEach((sessao) => {
+            const hora = new Date(sessao.data).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            const stats = [
+              `Execuções: ${sessao.execucoes}`,
+              `Repetições: ${sessao.repeticoes}`
+            ];
+            
+            // Ensure exercicio is a string
+            let exercicioNome = sessao.exercicio;
+            if (typeof exercicioNome === 'object') {
+              exercicioNome = exercicioNome.nome || JSON.stringify(exercicioNome);
+            }
+            
+            if (sessao.carga1 !== null && sessao.carga1 !== undefined) {
+              stats.push(`Carga 1: ${sessao.carga1} kg`);
+            }
+            if (sessao.carga2 !== null && sessao.carga2 !== undefined) {
+              stats.push(`Carga 2: ${sessao.carga2} kg`);
+            }
+            
+            html += `
+              <div style="margin: 8px 0; padding: 8px; background: white; border-radius: 4px; border: 1px solid #eee;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-weight: 500;">${hora} - ${exercicioNome}</span>
+                  <button 
+                    onclick="removerSessao(${sessao.originalIndex})" 
+                    style="
+                      background: #ff4d4f; 
+                      color: white; 
+                      border: none; 
+                      border-radius: 4px; 
+                      width: 24px;
+                      height: 24px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      cursor: pointer;
+                      font-size: 16px;
+                      line-height: 1;
+                      padding: 0;
+                      margin-left: 10px;
+                      transition: background-color 0.2s;
+                    "
+                    onmouseover="this.style.backgroundColor='#ff7875'"
+                    onmouseout="this.style.backgroundColor='#ff4d4f'"
+                    title="Excluir"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div style="margin-top: 6px; padding-left: 4px;">
+                  ${stats.map((stat, i) => {
+                    const isLast = i === stats.length - 1;
+                    const prefix = isLast ? '└─ ' : '├─ ';
+                    return `<div style="color: #666; font-size: 0.9em; margin: 2px 0;">${prefix}${stat}</div>`;
+                  }).join('')}
+                </div>
+              </div>
+            `;
+          });
+          
+          // Add session end message if exists
+          if (endMarkers.length > 0) {
+            const endMarker = endMarkers[0]; // Only use the first end marker if multiple exist
+            const horaFim = new Date(endMarker.data).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            
+            const startTime = new Date(primeiraSessao.data);
+            const endTime = new Date(endMarker.data);
+            const duracaoSegundos = Math.max(1, Math.ceil((endTime - startTime) / 1000));
+            const duracaoMinutos = Math.floor(duracaoSegundos / 60);
+            const segundosRestantes = duracaoSegundos % 60;
+            const exerciciosCount = exercises.length;
+            
+            html += `
+              <div style="margin-top: 16px; padding: 8px 12px; background-color: #f6ffed; border-left: 3px solid #52c41a; border-radius: 2px;">
+                <div style="color: #52c41a; font-weight: 500;">
+                  🕒 ${horaFim} - Sessão Finalizada
+                </div>
+                <div style="color: #8c8c8c; margin-left: 20px; font-size: 0.9em; margin-top: 4px;">
+                  <div>└─ Duração: ${duracaoMinutos} minuto${duracaoMinutos !== 1 ? 's' : ''} e ${segundosRestantes} segundo${segundosRestantes !== 1 ? 's' : ''}</div>
+                  <div>└─ Exercícios realizados: ${exerciciosCount}</div>
+                </div>
+              </div>
+            `;
+          }
+          
+          // Close the session div
+          html += `
+            </div> <!-- End of session div -->
+          `;
+          
+          html += `</div>`; // Close session container
+        }
+        
+        html += `</div>`; // Close date container
+      }
+      
+      historicoDiv.innerHTML = html;
+    }
+    
+    function exportarCSV() {
+      const sessoes = JSON.parse(localStorage.getItem("historicoSessoes") || "[]");
+      const sessoesPorData = {};
+      
+      // Group sessions by date and session ID
+      sessoes.forEach((sessao, index) => {
+        const dataKey = new Date(sessao.data).toLocaleDateString('pt-BR');
+        const sessionId = sessao.sessionId || 'default';
+        
+        if (!sessoesPorData[dataKey]) {
+          sessoesPorData[dataKey] = {};
+        }
+        if (!sessoesPorData[dataKey][sessionId]) {
+          sessoesPorData[dataKey][sessionId] = [];
+        }
+        
+        // Add index to the session for reference
+        sessao.originalIndex = index;
+        sessoesPorData[dataKey][sessionId].push(sessao);
+      });
+      
+      if (Object.keys(sessoesPorData).length === 0) {
+        return alert("Nenhuma sessão salva para exportar.");
+      }
+      
+      // Create CSV header
+      let csv = "Tipo;Data/Hora;Detalhe;Duração;Exercício;Execuções;Repetições;Carga 1 (kg);Carga 2 (kg)\n";
+      
+      // Process each date and session
+      for (const [data, sessionsByDate] of Object.entries(sessoesPorData)) {
+        for (const [sessionId, sessoesDoDia] of Object.entries(sessionsByDate)) {
+          // Separate exercises from session end markers
+          const exercises = sessoesDoDia.filter(s => !s.isSessionEnd);
+          const endMarkers = sessoesDoDia.filter(s => s.isSessionEnd);
+          
+          if (exercises.length === 0) continue;
+          
+          // Sort by time
+          exercises.sort((a, b) => new Date(a.data) - new Date(b.data));
+          
+          // Add session start
+          const startTime = new Date(exercises[0].data);
+          csv += `"Sessão Iniciada";"${startTime.toLocaleString('pt-BR')}";"Início da sessão de treino";"";"";"";"";"";""\n`;
+          
+          // Add exercises
+          exercises.forEach(sessao => {
+            const dataHora = new Date(sessao.data).toLocaleString('pt-BR');
+            const carga1 = sessao.carga1 || 0;
+            const carga2 = sessao.carga2 !== null && sessao.carga2 !== undefined ? sessao.carga2 : '';
+            csv += `"Exercício";"${dataHora}";"${sessao.exercicio}";"";"${sessao.exercicio}";${sessao.execucoes};${sessao.repeticoes};${carga1};${carga2}\n`;
+          });
+          
+          // Add session end if exists
+          if (endMarkers.length > 0) {
+            const endMarker = endMarkers[0];
+            const endTime = new Date(endMarker.data);
+            const duracaoSegundos = Math.max(1, Math.ceil((endTime - startTime) / 1000));
+            const duracaoMinutos = Math.floor(duracaoSegundos / 60);
+            const segundosRestantes = duracaoSegundos % 60;
+            const duracaoFormatada = `${duracaoMinutos}:${segundosRestantes.toString().padStart(2, '0')}`;
+            
+            csv += `"Sessão Finalizada";"${endTime.toLocaleString('pt-BR')}";"Fim da sessão de treino";"${duracaoFormatada}";"";"${exercises.length}";"";"";""\n`;
+          }
+          
+          // Add empty line between sessions
+          csv += "\n";
+        }
+      }
+      
+      // Create and trigger download
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `historico_treino_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+    
+    function exportarHTML() {
+      const sessoes = JSON.parse(localStorage.getItem('historicoSessoes') || '[]');
+      const sessoesAgrupadas = {};
+      
+      // Group sessions by date and session ID
+      sessoes.forEach((sessao, index) => {
+        const dataKey = new Date(sessao.data).toLocaleDateString('pt-BR');
+        const sessionId = sessao.sessionId || 'default';
+        
+        if (!sessoesAgrupadas[dataKey]) {
+          sessoesAgrupadas[dataKey] = {};
+        }
+        if (!sessoesAgrupadas[dataKey][sessionId]) {
+          sessoesAgrupadas[dataKey][sessionId] = [];
+        }
+        
+        sessao.originalIndex = index;
+        sessoesAgrupadas[dataKey][sessionId].push(sessao);
+      });
+      
+      if (Object.keys(sessoesAgrupadas).length === 0) {
+        alert('Nenhum dado para exportar.');
+        return;
+      }
+      
+      // Create HTML document
+      let html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Histórico de Treinos</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background-color: #f5f5f5;
+          }
+          h1 { 
+            color: #1890ff; 
+            text-align: center; 
+            margin-bottom: 30px;
+          }
+          .export-date {
+            text-align: right;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+          }
+          .session-date { 
+            font-size: 1.3em; 
+            font-weight: bold; 
+            margin: 30px 0 15px; 
+            padding-bottom: 8px; 
+            border-bottom: 2px solid #1890ff;
+            color: #333;
+          }
+          .session { 
+            margin-bottom: 30px; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          }
+          .session-start { 
+            color: #1890ff; 
+            background-color: #e6f7ff; 
+            padding: 10px 15px; 
+            border-left: 4px solid #1890ff; 
+            margin: 0 0 15px 0;
+            border-radius: 4px;
+            font-weight: 500;
+          }
+          .exercise { 
+            margin: 15px 0; 
+            padding: 12px; 
+            background: white; 
+            border-radius: 6px; 
+            border: 1px solid #eee;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+          }
+          .exercise-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 8px;
+          }
+          .exercise-time { 
+            font-weight: bold;
+            color: #333;
+          }
+          .exercise-name { 
+            font-weight: 500;
+            color: #1890ff;
+          }
+          .exercise-stats { 
+            margin-left: 15px; 
+            color: #555; 
+            font-size: 0.95em;
+            line-height: 1.5;
+          }
+          .session-end { 
+            color: #52c41a; 
+            background-color: #f6ffed; 
+            padding: 10px 15px; 
+            border-left: 4px solid #52c41a; 
+            margin: 15px 0 0 0;
+            border-radius: 4px;
+            font-weight: 500;
+          }
+          .stat-line {
+            margin: 4px 0;
+            padding-left: 10px;
+            position: relative;
+          }
+          .stat-line:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #999;
+          }
+          .session-duration {
+            font-weight: 500;
+            color: #333;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Histórico de Treinos</h1>
+        <div class="export-date">Exportado em: ${new Date().toLocaleString('pt-BR')}</div>
+      `;
+      
+      // Sort dates in descending order (newest first)
+      const datasOrdenadas = Object.keys(sessoesAgrupadas).sort((a, b) => 
+        new Date(b.split('/').reverse().join('-')) - new Date(a.split('/').reverse().join('-'))
+      );
+      
+      // Process each date
+      datasOrdenadas.forEach(data => {
+        html += `<div class="session-date">${data}</div>`;
+        const sessoesDoDia = sessoesAgrupadas[data];
+        
+        // Process each session for this date
+        Object.values(sessoesDoDia).forEach(sessoes => {
+          if (sessoes.length === 0) return;
+          
+          // Separate exercises from session end markers
+          const exercises = sessoes.filter(s => !s.isSessionEnd);
+          const endMarkers = sessoes.filter(s => s.isSessionEnd);
+          
+          if (exercises.length === 0) return;
+          
+          // Sort by time
+          exercises.sort((a, b) => new Date(a.data) - new Date(b.data));
+          
+          // Add session start
+          const startTime = new Date(exercises[0].data);
+          const formattedStartTime = startTime.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+          
+          html += `
+            <div class="session">
+              <div class="session-start">
+                🕒 ${formattedStartTime} - Sessão Iniciada
+              </div>
+          `;
+          
+          // Add exercises
+          exercises.forEach(sessao => {
+            const hora = new Date(sessao.data).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            const stats = [
+              sessao.execucoes ? `Execuções: ${sessao.execucoes}` : null,
+              sessao.repeticoes ? `Repetições: ${sessao.repeticoes}` : null,
+              sessao.carga1 !== undefined ? `Carga 1: ${sessao.carga1} kg` : null,
+              sessao.carga2 !== undefined && sessao.carga2 !== '' ? `Carga 2: ${sessao.carga2} kg` : null
+            ].filter(Boolean);
+            
+            html += `
+              <div class="exercise">
+                <div class="exercise-header">
+                  <span class="exercise-time">${hora}</span>
+                  <span class="exercise-name">${sessao.exercicio}</span>
+                </div>
+                <div class="exercise-stats">
+                  ${stats.map(stat => `<div class="stat-line">${stat}</div>`).join('')}
+                </div>
+              </div>
+            `;
+          });
+          
+          // Add session end if exists
+          if (endMarkers.length > 0) {
+            const endMarker = endMarkers[0];
+            const endTime = new Date(endMarker.data);
+            const formattedEndTime = endTime.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            
+            // Calculate duration
+            const duracaoSegundos = Math.max(1, Math.ceil((endTime - startTime) / 1000));
+            const duracaoMinutos = Math.floor(duracaoSegundos / 60);
+            const segundosRestantes = duracaoSegundos % 60;
+            
+            html += `
+              <div class="session-end">
+                <div>🕒 ${formattedEndTime} - Sessão Finalizada</div>
+                <div class="exercise-stats">
+                  <div class="stat-line">Duração: <span class="session-duration">${duracaoMinutos} minuto${duracaoMinutos !== 1 ? 's' : ''} e ${segundosRestantes} segundo${segundosRestantes !== 1 ? 's' : ''}</span></div>
+                  <div class="stat-line">Exercícios realizados: <span class="session-duration">${exercises.length}</span></div>
+                </div>
+              </div>
+            `;
+          }
+          
+          html += `</div>`; // Close session div
+        });
+      });
+      
+      // Close HTML document
+      html += `
+        </body>
+        </html>
+      `;
+      
+      // Create and trigger download
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `historico_treino_${new Date().toISOString().slice(0,10)}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // Stopwatch functionality
+      let stopwatchInterval;
+      let seconds = 0;
+      let isRunning = false;
+      
+      function updateStopwatch() {
+        seconds++;
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        
+        document.getElementById('stopwatch').textContent = 
+          `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+      
+      document.getElementById('startStop').addEventListener('click', function() {
+        if (isRunning) {
+          clearInterval(stopwatchInterval);
+          this.innerHTML = '<i class="fas fa-play"></i>';
+        } else {
+          stopwatchInterval = setInterval(updateStopwatch, 1000);
+          this.innerHTML = '<i class="fas fa-pause"></i>';
+        }
+        isRunning = !isRunning;
+      });
+      
+      document.getElementById('reset').addEventListener('click', function() {
+        clearInterval(stopwatchInterval);
+        seconds = 0;
+        document.getElementById('stopwatch').textContent = '00:00:00';
+        document.getElementById('startStop').innerHTML = '<i class="fas fa-play"></i>';
+        document.getElementById('laps').innerHTML = '';
+        isRunning = false;
+      });
+      
+      document.getElementById('lap').addEventListener('click', function() {
+        if (seconds > 0) {
+          const lapTime = document.getElementById('stopwatch').textContent;
+          const lapElement = document.createElement('div');
+          lapElement.className = 'lap-time';
+          lapElement.textContent = `Volta ${document.getElementById('laps').children.length + 1}: ${lapTime}`;
+          document.getElementById('laps').prepend(lapElement);
+        }
+      });
+      
+      // Inicialização
+      atualizarDropdown();
+      atualizarLista();
+      exibirHistoricoSessoes();
+    }
+
+    function removerSessao(index) {
+      if (!confirm('Tem certeza que deseja excluir esta sessão?')) return;
+      
+      const historicoSessoes = JSON.parse(localStorage.getItem("historicoSessoes")) || [];
+      if (index >= 0 && index < historicoSessoes.length) {
+        historicoSessoes.splice(index, 1);
+        localStorage.setItem("historicoSessoes", JSON.stringify(historicoSessoes));
+        exibirHistoricoSessoes();
+      }
+    }
+    
+    // Stopwatch functionality
+    let stopwatchInterval;
+    let seconds = 0;
+    let isRunning = false;
+    
+    function updateStopwatch() {
+      seconds++;
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      
+      document.getElementById('stopwatch').textContent = 
+        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    
+    // Initialize the application when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize other components
+      atualizarDropdown();
+      atualizarLista();
+      exibirHistoricoSessoes();
+      
+      // Initialize the stopwatch
+      document.getElementById('startStop').addEventListener('click', function() {
+        if (isRunning) {
+          clearInterval(stopwatchInterval);
+          this.innerHTML = '<i class="fas fa-play"></i>';
+        } else {
+          stopwatchInterval = setInterval(updateStopwatch, 1000);
+          this.innerHTML = '<i class="fas fa-pause"></i>';
+        }
+        isRunning = !isRunning;
+      });
+
+      document.getElementById('reset').addEventListener('click', function() {
+        clearInterval(stopwatchInterval);
+        seconds = 0;
+        isRunning = false;
+        document.getElementById('stopwatch').textContent = '00:00:00';
+        document.getElementById('startStop').innerHTML = '<i class="fas fa-play"></i>';
+        document.getElementById('laps').innerHTML = '';
+      });
+      
+      document.getElementById('lap').addEventListener('click', function() {
+        if (seconds > 0) {
+          const lapTime = document.getElementById('stopwatch').textContent;
+          const lapElement = document.createElement('div');
+          lapElement.className = 'lap-time';
+          lapElement.textContent = `Volta ${document.getElementById('laps').children.length + 1}: ${lapTime}`;
+          document.getElementById('laps').prepend(lapElement);
+        }
+      });
+      
+      // Stopwatch will now only start when the start button is pressed
+    });
+  </script>
+  </div>
+</body>
+</html>

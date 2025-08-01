@@ -1,0 +1,265 @@
+{
+  "debugEnabled": true,
+  "historicoSessoes": [
+    {
+      "isSessionEnd": true,
+      "sessionId": "1753825681708",
+      "data": "2025-07-29T22:21:16.545Z",
+      "dataFormatada": "29/07/2025, 19:21:16",
+      "exercicio": "",
+      "execucoes": 0,
+      "repeticoes": 0,
+      "duracao": 1996.935,
+      "exerciciosCount": 1
+    },
+    {
+      "data": "2025-07-29T21:47:59.610Z",
+      "exercicio": "Natação",
+      "execucoes": 1,
+      "repeticoes": "",
+      "carga1": "",
+      "carga2": "",
+      "dataFormatada": "29/07/2025, 18:47:59",
+      "sessionId": "1753825681708"
+    },
+    {
+      "isSessionEnd": true,
+      "sessionId": "1753793699247",
+      "data": "2025-07-29T21:47:50.967Z",
+      "dataFormatada": "29/07/2025, 18:47:50",
+      "exercicio": "",
+      "execucoes": 0,
+      "repeticoes": 0,
+      "duracao": 31979.402,
+      "exerciciosCount": 2
+    },
+    {
+      "data": "2025-07-21T18:23:19.327Z",
+      "exercicio": "Supino Inclinado com Halteres",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 20,
+      "carga2": null,
+      "dataFormatada": "21/07/2025, 15:23:19",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-21T18:23:41.371Z",
+      "exercicio": "Banco Supino Reto + Crucifixo com Halteres",
+      "execucoes": 3,
+      "repeticoes": 10,
+      "carga1": 20,
+      "carga2": 10,
+      "dataFormatada": "21/07/2025, 15:23:41",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-21T18:24:08.305Z",
+      "exercicio": "Crossover Polia Alta",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 25,
+      "carga2": null,
+      "dataFormatada": "21/07/2025, 15:24:08",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-21T18:26:26.152Z",
+      "exercicio": "Tríceps Francês na Polia com Barra Reta",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 40,
+      "carga2": null,
+      "dataFormatada": "21/07/2025, 15:26:26",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-21T18:26:42.054Z",
+      "exercicio": "Tríceps Testa na Polia com Barra Reta",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 40,
+      "carga2": null,
+      "dataFormatada": "21/07/2025, 15:26:42",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-21T18:27:00.261Z",
+      "exercicio": "Desenvolvimento com Halteres Sentado",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 10,
+      "carga2": null,
+      "dataFormatada": "21/07/2025, 15:27:00",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-21T18:27:18.781Z",
+      "exercicio": "Elevação frontal / lateral",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 6,
+      "carga2": null,
+      "dataFormatada": "21/07/2025, 15:27:18",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-21T18:27:35.638Z",
+      "exercicio": "Abdominal Infra Pernas Estendidas (Curto)",
+      "execucoes": 3,
+      "repeticoes": 25,
+      "carga1": 0,
+      "carga2": null,
+      "dataFormatada": "21/07/2025, 15:27:35",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-22T16:27:30.831Z",
+      "exercicio": "Supino Inclinado com Halteres",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 20,
+      "carga2": null,
+      "dataFormatada": "22/07/2025, 13:27:30",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-22T16:37:51.450Z",
+      "exercicio": "Banco Supino Reto + Crucifixo com Halteres",
+      "execucoes": 3,
+      "repeticoes": 10,
+      "carga1": 20,
+      "carga2": 10,
+      "dataFormatada": "22/07/2025, 13:37:51",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-22T16:52:05.599Z",
+      "exercicio": "Crossover Polia Alta",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 25,
+      "carga2": null,
+      "dataFormatada": "22/07/2025, 13:52:05",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-22T16:57:26.689Z",
+      "exercicio": "Tríceps Francês na Polia com Barra Reta",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 40,
+      "carga2": null,
+      "dataFormatada": "22/07/2025, 13:57:26",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-22T17:09:43.798Z",
+      "exercicio": "Tríceps Testa na Polia com Barra Reta",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 40,
+      "carga2": null,
+      "dataFormatada": "22/07/2025, 14:09:43",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-22T17:10:39.019Z",
+      "exercicio": "Desenvolvimento com Halteres Sentado",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 10,
+      "carga2": null,
+      "dataFormatada": "22/07/2025, 14:10:39",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-22T17:20:29.890Z",
+      "exercicio": "Elevação frontal / lateral",
+      "execucoes": 3,
+      "repeticoes": 10,
+      "carga1": 6,
+      "carga2": null,
+      "dataFormatada": "22/07/2025, 14:20:29",
+      "tipo": "sessao"
+    },
+    {
+      "data": "2025-07-22T17:30:58.138Z",
+      "exercicio": "Fim de treino",
+      "execucoes": 0,
+      "repeticoes": 0,
+      "carga1": 0,
+      "carga2": null,
+      "dataFormatada": "22/07/2025, 14:30:58",
+      "tipo": "sessao"
+    },
+    {
+      "isSessionEnd": true,
+      "sessionId": "1753645821284",
+      "data": "2025-07-27T20:04:33.599Z",
+      "dataFormatada": "27/07/2025, 17:04:33"
+    }
+  ],
+  "workoutCounts": {
+    "weekly": 3,
+    "monthly": 3,
+    "lastUpdated": "2025-07-30T00:19:11.759Z"
+  },
+  "exercicios": [
+    "Banco Supino Reto + Crucifixo com Halteres",
+    "Crossover Polia Alta",
+    "Tríceps Francês na Polia com Barra Reta",
+    "Tríceps Testa na Polia com Barra Reta",
+    "Desenvolvimento com Halteres Sentado",
+    "Elevação frontal / lateral",
+    "Abdominal Infra Pernas Estendidas (Curto)",
+    "Spinning",
+    "Caminhada",
+    "Natação",
+    "Barra Fixa Gráviton (Pegada Aberta) + Remada Curvada com Barra Reta (Pegada Supinada)",
+    "Puxada Neutra triangulo",
+    "Remada Unilateral Halteres - Pegada Neutra (Serro",
+    "Rosca Direta na Polia (Barra Reta) + Rosca Inversa com Barra Reta",
+    "Rosca Direta Barra H",
+    "Crucifixo Inverso Máquina",
+    "Remada Alta com Barra W",
+    "PERNA (INFERIORES)",
+    "Leg Press 45",
+    "Cadeira Extensora + Passada",
+    "Cadeira Flexora + Stiff com Halteres",
+    "Abdução de Quadril Máquina + Agachamento Sumô com Halteres",
+    "Adução de Quadril Máquina",
+    "Extensão de Panturrilha Maquina",
+    "Abdominal Supra Banco Declinado",
+    "Abdominal Supra no Solo Pés Altos",
+    "Pilates",
+    "Supino Inclinado com Halteres",
+    "Remada Unilateral Halteres - Pegada Neutra (Serro)"
+  ],
+  "sessoes": [
+    {
+      "data": "2025-07-27T16:32:27.907Z",
+      "exercicio": "Crossover Polia Alta",
+      "execucoes": 3,
+      "repeticoes": 20,
+      "carga1": 40,
+      "carga2": null,
+      "dataFormatada": "27/07/2025, 13:32:27"
+    },
+    {
+      "data": "2025-07-27T16:31:57.177Z",
+      "exercicio": "Banco Supino Reto + Crucifixo com Halteres",
+      "execucoes": 3,
+      "repeticoes": 12,
+      "carga1": 20,
+      "carga2": null,
+      "dataFormatada": "27/07/2025, 13:31:57"
+    }
+  ],
+  "exerciseListCollapsed": true,
+  "endedSessions": {
+    "1753645821284": true,
+    "1753793699247": true,
+    "1753825681708": true
+  }
+}

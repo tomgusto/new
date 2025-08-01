@@ -1,0 +1,14 @@
+{
+  "name": "workout-manager",
+  "version": "1.0.0",
+  "description": "Workout Manager PWA",
+  "main": "generate-splashscreens.js",
+  "scripts": {
+    "generate-splash": "node generate-splashscreens.js"
+  },
+  "dependencies": {
+    "fs-extra": "^11.3.0",
+    "jimp": "^0.22.12",
+    "sharp": "^0.34.3"
+  }
+}

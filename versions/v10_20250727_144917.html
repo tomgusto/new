@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-br" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciador de Treino</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#007bff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Gerenciador de Treino">
+  <meta name="apple-mobile-web-app-title" content="Workout App">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com; img-src 'self' data:;">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1em;
+      background: #f4f4f4;
+      color: #333;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 0.8em;
+      margin: 0.5em 0;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    /* Stopwatch Styles */
+    .stopwatch-container {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    #stopwatch {
+      font-size: 2em;
+      font-family: monospace;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #007BFF;
+    }
+    
+    .stopwatch-controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 10px 0;
+    }
+    
+    .stopwatch-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      background: #007BFF;
+      color: white;
+      font-size: 1.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .stopwatch-btn:active {
+      transform: scale(0.95);
+    }
+    
+    #startStop {
+      background: #28a745;
+    }
+    
+    #reset {
+      background: #dc3545;
+    }
+    
+    #lap {
+      background: #ffc107;
+      color: #212529;
+    }
+    
+    .laps-container {
+      margin-top: 15px;
+      max-height: 150px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .lap-time {
+      padding: 8px;
+      margin: 5px 0;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .salvar-btn {
+      background-color: #28a745;
+      margin-top: 10px;
+    }
+    .salvar-btn:hover {
+      background-color: #218838;
+    }
+    .contadores {
+      display: none;
+      text-align: center;
+      margin-top: 1em;
+    }
+    .contador-btn {
+      width: 48%;
+      margin: 0.5em 1%;
+    }
+    .contador-input {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    .contador-input label {
+      margin-right: 10px;
+      min-width: 100px;
+      text-align: right;
+    }
+    .contador-input input {
+      width: 80px;
+      text-align: center;
+      margin: 0 5px;
+    }
+    #lista-exercicios {
+      list-style: none;
+      padding: 0;
+    }
+    #lista-exercicios li {
+      padding: 0.4em;
+      background: #ddd;
+      margin: 0.3em 0;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .remover {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .remover:hover {
+      background: #c82333;
+    }
+    
+    .export-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .export-btn:first-child {
+      background-color: #28a745;
+    }
+    
+    .export-btn:first-child:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🏋️ Gerenciador de Treino</h1>
+  <div class="stopwatch-container">
+    <div id="stopwatch">00:00:00</div>
+    <div class="stopwatch-controls">
+      <button id="startStop" class="stopwatch-btn"><i class="fas fa-play"></i></button>
+      <button id="reset" class="stopwatch-btn"><i class="fas fa-redo"></i></button>
+      <button id="lap" class="stopwatch-btn"><i class="fas fa-flag"></i></button>
+    </div>
+    <div id="laps" class="laps-container"></div>
+  </div>
+
+  <!-- Seleção -->
+  <form onsubmit="event.preventDefault(); iniciarTreino();">
+    <label for="exercicio-select">Selecionar exercício:</label>
+    <select id="exercicio-select" required>
+      <option value="">-- Selecione --</option>
+    </select>
+    <button type="submit">Iniciar Execução</button>
+  </form>
+
+  <!-- Contadores -->
+  <div id="contadores" class="contadores">
+    <h2 id="exercicio-nome"></h2>
+    
+    <button class="contador-btn" onclick="incrementar('exec')">+ Execução</button>
+    <span>Execuções: <strong id="exec-count">0</strong></span><br>
+    
+    <div class="contador-input">
+      <label for="rep-count">Repetições:</label>
+      <input type="number" id="rep-count" value="0" min="0" onchange="atualizarContador('rep', this.value)">
+    </div>
+    
+    <div class="contador-input">
+      <label for="carga1">Carga 1 (kg):</label>
+      <input type="number" id="carga1" value="0" min="0" step="0.5" onchange="atualizarCarga('carga1', this.value)">
+    </div>
+    
+    <div class="contador-input">
+      <label for="carga2">Carga 2 (kg):</label>
+      <input type="number" id="carga2" min="0" step="0.5" onchange="atualizarCarga('carga2', this.value)">
+    </div>
+    
+    <button type="button" onclick="salvarSessao()" class="salvar-btn">💾 Salvar</button>
+    <div id="sessao-salva" style="display: none; margin: 10px 0; padding: 10px; background: #e8f5e9; color: #2e7d32; border-radius: 4px;">
+      Sessão salva com sucesso!
+    </div>
+  </div>
+  
+  <!-- Histórico de Sessões -->
+  <div id="historico-container" style="margin-top: 30px;">
+    <h2>Histórico de Sessões</h2>
+    <div id="historico-sessoes" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: white; min-height: 60px; margin-bottom: 15px;">
+      <p style="margin: 0; color: #666; font-style: italic;">Nenhuma sessão salva ainda.</p>
+    </div>
+    <div style="text-align: right;">
+      <button class="btn btn-outline-secondary me-2" onclick="exportarCSV()" style="margin-right: 8px;">
+        <i class="fas fa-file-csv"></i> Exportar CSV
+      </button>
+      <button class="btn btn-outline-primary" onclick="exportarHTML()">
+        <i class="fas fa-file-code"></i> Exportar HTML
+      </button>
+    </div>
+  </div>
+
+  <!-- Cadastro -->
+  <h2>Cadastrar Novo Exercício</h2>
+  <input type="text" id="novo-exercicio" placeholder="Nome do exercício">
+  <button onclick="adicionarExercicio()">Adicionar</button>
+
+  <!-- Lista -->
+  <h2>Exercícios Cadastrados</h2>
+  <ul id="lista-exercicios"></ul>
+
+  <script>
+    let execucoes = 0;
+    let repeticoes = 0;
+    let carga1 = 0;
+    let carga2 = null;
+    let exercicioAtual = "";
+    let dataSessao = null;
+    let historicoTreino = [];
+
+    function salvarLista(lista) {
+      localStorage.setItem("exercicios", JSON.stringify(lista));
+    }
+
+    function carregarLista() {
+      return JSON.parse(localStorage.getItem("exercicios")) || [];
+    }
+
+    function atualizarDropdown() {
+      const select = document.getElementById("exercicio-select");
+      select.innerHTML = '<option value="">-- Selecione --</option>';
+      const lista = carregarLista();
+      lista.forEach(ex => {
+        const opt = document.createElement("option");
+        opt.value = ex;
+        opt.textContent = ex;
+        select.appendChild(opt);
+      });
+    }
+
+    function atualizarLista() {
+      const ul = document.getElementById("lista-exercicios");
+      ul.innerHTML = "";
+      const lista = carregarLista();
+      lista.forEach((ex, i) => {
+        const li = document.createElement("li");
+        li.textContent = ex;
+        const btn = document.createElement("button");
+        btn.textContent = "x";
+        btn.className = "remover";
+        btn.onclick = () => {
+          lista.splice(i, 1);
+          salvarLista(lista);
+          atualizarLista();
+          atualizarDropdown();
+        };
+        li.appendChild(btn);
+        ul.appendChild(li);
+      });
+    }
+
+    function adicionarExercicio() {
+      const nome = document.getElementById("novo-exercicio").value.trim();
+      if (!nome) return;
+      const lista = carregarLista();
+      if (!lista.includes(nome)) {
+        lista.push(nome);
+        salvarLista(lista);
+        atualizarLista();
+        atualizarDropdown();
+        document.getElementById("novo-exercicio").value = "";
+      }
+    }
+
+    function iniciarTreino() {
+      const select = document.getElementById("exercicio-select");
+      const nome = select.value;
+      if (!nome) return alert("Selecione um exercício.");
+      exercicioAtual = nome;
+      execucoes = 0;
+      repeticoes = 0;
+      carga1 = 0;
+      carga2 = null;
+      document.getElementById("exec-count").textContent = execucoes;
+      document.getElementById("rep-count").value = repeticoes;
+      document.getElementById("carga1").value = carga1;
+      document.getElementById("carga2").value = '';
+      document.getElementById("exercicio-nome").textContent = nome;
+      document.getElementById("contadores").style.display = "block";
+      
+      // Set session date/time only if not already set
+      if (!dataSessao) {
+        dataSessao = new Date();
+      }
+    }
+
+    function incrementar(tipo) {
+      if (tipo === "exec") execucoes++;
+      if (tipo === "rep") repeticoes++;
+      document.getElementById("exec-count").textContent = execucoes;
+      document.getElementById("rep-count").value = repeticoes;
+    }
+
+    function atualizarContador(tipo, valor) {
+      valor = parseInt(valor) || 0;
+      if (tipo === "rep") repeticoes = valor;
+      document.getElementById("rep-count").value = repeticoes;
+    }
+    
+    function atualizarCarga(tipo, valor) {
+      if (tipo === 'carga1') {
+        carga1 = parseFloat(valor) || 0;
+        document.getElementById("carga1").value = carga1;
+      } else if (tipo === 'carga2') {
+        carga2 = valor === '' ? null : parseFloat(valor);
+        document.getElementById("carga2").value = carga2 === null ? '' : carga2;
+      }
+    }
+
+    function salvarSessao() {
+      if (!exercicioAtual) return alert("Nenhum exercício em andamento.");
+      
+      const dataAtual = dataSessao || new Date();
+      const dataFormatada = dataAtual.toLocaleString('pt-BR');
+      
+      const sessao = {
+        data: dataAtual.toISOString(),
+        exercicio: exercicioAtual,
+        execucoes: execucoes,
+        repeticoes: repeticoes,
+        carga1: carga1,
+        carga2: carga2,
+        dataFormatada: dataFormatada
+      };
+      
+      // Get existing sessions or initialize empty array
+      const sessoes = JSON.parse(localStorage.getItem("sessoes")) || [];
+      sessoes.unshift(sessao); // Add to beginning of array to show newest first
+      
+      // Save to localStorage
+      localStorage.setItem("sessoes", JSON.stringify(sessoes));
+      
+      // Show success message
+      const mensagem = document.getElementById("sessao-salva");
+      mensagem.style.display = "block";
+      setTimeout(() => {
+        mensagem.style.display = "none";
+      }, 3000);
+      
+      // Update the displayed history
+      exibirHistoricoSessoes();
+      
+      // Reset for next exercise
+      document.getElementById("exercicio-select").value = "";
+      document.getElementById("contadores").style.display = "none";
+      exercicioAtual = "";
+      dataSessao = null; // Reset session date for next session
+    }
+    
+    function exibirHistoricoSessoes() {
+      const historicoDiv = document.getElementById("historico-sessoes");
+      const sessoes = JSON.parse(localStorage.getItem("sessoes")) || [];
+      
+      if (sessoes.length === 0) {
+        historicoDiv.innerHTML = "<p style=\"margin: 0; color: #666; font-style: italic;\">Nenhuma sessão salva ainda.</p>";
+        return;
+      }
+      
+      // Group sessions by date
+      const sessoesPorData = {};
+      sessoes.forEach((sessao, index) => {
+        const dataKey = new Date(sessao.data).toLocaleDateString('pt-BR');
+        if (!sessoesPorData[dataKey]) {
+          sessoesPorData[dataKey] = [];
+        }
+        // Add index to the session for deletion
+        sessao.originalIndex = index;
+        sessoesPorData[dataKey].push(sessao);
+      });
+      
+      let html = '';
+      for (const [data, sessoesDoDia] of Object.entries(sessoesPorData)) {
+        // Sort sessions by time (oldest first)
+        sessoesDoDia.sort((a, b) => new Date(a.data) - new Date(b.data));
+        
+        // Add session start message
+        const primeiraSessao = sessoesDoDia[0];
+        const horaInicio = new Date(primeiraSessao.data).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        
+        html += `
+          <div style="margin-bottom: 25px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-weight: bold; color: #333; margin-bottom: 8px; font-size: 1.1em;">${data}</div>
+            <div style="border-top: 1px solid #eee; margin: 8px 0 12px 0;"></div>
+            <div style="color: #1890ff; margin-bottom: 12px; padding: 8px 12px; background-color: #e6f7ff; border-left: 3px solid #1890ff; border-radius: 2px;">
+              🕒 ${horaInicio} - Sessão Iniciada
+            </div>
+        `;
+        
+        sessoesDoDia.forEach((sessao, index) => {
+          const hora = new Date(sessao.data).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+          const stats = [
+            `Execuções: ${sessao.execucoes}`,
+            `Repetições: ${sessao.repeticoes}`
+          ];
+          
+          if (sessao.carga1 !== null && sessao.carga1 !== undefined) {
+            stats.push(`Carga 1: ${sessao.carga1} kg`);
+          }
+          if (sessao.carga2 !== null && sessao.carga2 !== undefined) {
+            stats.push(`Carga 2: ${sessao.carga2} kg`);
+          }
+
+          
+          html += `
+            <div style="margin: 12px 0; border-bottom: 1px solid #eee;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span>${hora} - ${sessao.exercicio}</span>
+                <button 
+                  onclick="removerSessao(${sessao.originalIndex})" 
+                  style="
+                    background: #ff4d4f; 
+                    color: white; 
+                    border: none; 
+                    border-radius: 4px; 
+                    width: 24px;
+                    height: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    font-size: 16px;
+                    line-height: 1;
+                    padding: 0;
+                    margin-left: 10px;
+                  "
+                  title="Excluir"
+                >
+                  ×
+                </button>
+              </div>
+          `;
+          
+          // Exercise stats
+          stats.forEach((stat, i) => {
+            const prefix = i === stats.length - 1 ? '└─ ' : '├─ ';
+            html += `
+              <div style="color: #666; margin-left: 20px; font-size: 0.9em;">
+                ${prefix}${stat}
+              </div>
+            `;
+          });
+          
+          // Add space between exercises
+          //if (index < sessoesDoDia.length - 1) {
+            html += `<div style="height: 8px;"></div>`;
+         // }
+          
+          html += `</div>`; // Close exercise container
+        });
+        
+        // Add session end with duration and exercise count
+        if (sessoesDoDia.length > 0) {
+          const ultimaSessao = sessoesDoDia[sessoesDoDia.length - 1];
+          const horaFim = new Date(ultimaSessao.data).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+          
+          // Calculate duration in minutes
+          const duracaoMs = new Date(ultimaSessao.data) - new Date(primeiraSessao.data);
+          const duracaoMinutos = Math.round(duracaoMs / (1000 * 60));
+          
+          html += `
+            <div style="margin-top: 16px; padding: 8px 12px; background-color: #f6ffed; border-left: 3px solid #52c41a; border-radius: 2px;">
+              <div style="color: #52c41a; font-weight: 500;">
+                🕒 ${horaFim} - Sessão Finalizada
+              </div>
+              <div style="color: #8c8c8c; margin-left: 20px; font-size: 0.9em; margin-top: 4px;">
+                <div>└─ Duração: ${duracaoMinutos} minutos</div>
+                <div>└─ Exercícios realizados: ${sessoesDoDia.length}</div>
+              </div>
+            </div>
+          `;
+        }
+        
+        html += `</div>`; // Close session container
+      }
+      
+      historicoDiv.innerHTML = html;
+    }
+    
+    function exportarCSV() {
+      const sessoes = JSON.parse(localStorage.getItem("sessoes")) || [];
+      
+      if (sessoes.length === 0) {
+        return alert("Nenhuma sessão salva para exportar.");
+      }
+      
+      // Create CSV header
+      let csv = "Data;Exercício;Execuções;Repetições;Carga 1 (kg);Carga 2 (kg)\n";
+      
+      // Add each session to CSV
+      sessoes.forEach(sessao => {
+        const data = new Date(sessao.data).toLocaleString('pt-BR');
+        const carga1 = sessao.carga1 || 0;
+        const carga2 = sessao.carga2 !== null && sessao.carga2 !== undefined ? sessao.carga2 : '';
+        csv += `"${data}";"${sessao.exercicio}";${sessao.execucoes};${sessao.repeticoes};${carga1};${carga2}\n`;
+      });
+      
+      // Create and trigger download
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `historico_treino_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+    
+    function exportarHTML() {
+      // Load session history if not already loaded
+      if (!historicoTreino || historicoTreino.length === 0) {
+        const sessoesSalvas = JSON.parse(localStorage.getItem('sessoes')) || [];
+        if (sessoesSalvas.length === 0) {
+          alert('Nenhum dado para exportar.');
+          return;
+        }
+        historicoTreino = sessoesSalvas;
+      }
+      
+      // Create a simple HTML document
+      let html = '<!DOCTYPE html><html><head>';
+      html += '<meta charset="UTF-8">';
+      html += '<title>Histórico de Treino</title>';
+      html += '<style>';
+      html += 'body { font-family: Arial, sans-serif; padding: 20px; }';
+      html += 'h1 { color: #333; }';
+      html += '.session { margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; }';
+      html += '.session-header { font-weight: bold; margin-bottom: 5px; }';
+      html += '.stats { display: flex; gap: 10px; }';
+      html += '.stat { background: #f0f0f0; padding: 3px 8px; border-radius: 3px; }';
+      html += '</style></head><body>';
+      
+      html += '<h1>Histórico de Treino</h1>';
+      html += '<p>Gerado em: ' + new Date().toLocaleString('pt-BR') + '</p>';
+      
+      // Group by date
+      const sessoesPorData = {};
+      historicoTreino.forEach(sessao => {
+        const data = new Date(sessao.data).toLocaleDateString('pt-BR');
+        if (!sessoesPorData[data]) {
+          sessoesPorData[data] = [];
+        }
+        sessoesPorData[data].push(sessao);
+      });
+      
+      // Add sessions to HTML
+      Object.entries(sessoesPorData).forEach(([data, sessoes]) => {
+        html += '<h2>' + data + '</h2>';
+        
+        sessoes.forEach(sessao => {
+          const hora = new Date(sessao.data).toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          });
+          
+          html += '<div class="session">';
+          html += '<div class="session-header">' + hora + ' - ' + sessao.exercicio + '</div>';
+          html += '<div class="stats">';
+          html += '<span class="stat">Repetições: ' + sessao.repeticoes + '</span>';
+          html += '<span class="stat">Execuções: ' + sessao.execucoes + '</span>';
+          
+          if (sessao.carga1 || sessao.carga2) {
+            const cargas = [];
+            if (sessao.carga1) cargas.push(sessao.carga1 + 'kg');
+            if (sessao.carga2) cargas.push(sessao.carga2 + 'kg');
+            html += '<span class="stat">Carga: ' + cargas.join(' + ') + '</span>';
+          }
+          
+          html += '</div></div>';
+        });
+      });
+      
+      // Close HTML
+      html += '</body></html>';
+      
+      // Create and trigger download
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'historico_treino_' + new Date().toISOString().split('T')[0] + '.html';
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 0);
+    }
+
+    function removerSessao(index) {
+      if (!confirm('Tem certeza que deseja excluir esta sessão?')) return;
+      
+      const sessoes = JSON.parse(localStorage.getItem("sessoes")) || [];
+      if (index >= 0 && index < sessoes.length) {
+        sessoes.splice(index, 1);
+        localStorage.setItem("sessoes", JSON.stringify(sessoes));
+        exibirHistoricoSessoes();
+      }
+    }
+    
+    // Stopwatch functionality
+    let stopwatchInterval;
+    let seconds = 0;
+    let isRunning = false;
+    
+    function updateStopwatch() {
+      seconds++;
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      
+      document.getElementById('stopwatch').textContent = 
+        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    
+    document.getElementById('startStop').addEventListener('click', function() {
+      if (isRunning) {
+        clearInterval(stopwatchInterval);
+        this.innerHTML = '<i class="fas fa-play"></i>';
+      } else {
+        stopwatchInterval = setInterval(updateStopwatch, 1000);
+        this.innerHTML = '<i class="fas fa-pause"></i>';
+      }
+      isRunning = !isRunning;
+    });
+    
+    document.getElementById('reset').addEventListener('click', function() {
+      clearInterval(stopwatchInterval);
+      seconds = 0;
+      document.getElementById('stopwatch').textContent = '00:00:00';
+      document.getElementById('startStop').innerHTML = '<i class="fas fa-play"></i>';
+      document.getElementById('laps').innerHTML = '';
+      isRunning = false;
+    });
+    
+    document.getElementById('lap').addEventListener('click', function() {
+      if (seconds > 0) {
+        const lapTime = document.getElementById('stopwatch').textContent;
+        const lapElement = document.createElement('div');
+        lapElement.className = 'lap-time';
+        lapElement.textContent = `Volta ${document.getElementById('laps').children.length + 1}: ${lapTime}`;
+        document.getElementById('laps').prepend(lapElement);
+      }
+    });
+    
+    // Inicialização
+    atualizarDropdown();
+    atualizarLista();
+    exibirHistoricoSessoes();
+  </script>
+
+</body>
+</html>

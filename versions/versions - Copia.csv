@@ -1,0 +1,24 @@
+﻿Version,Timestamp,Description,FileName
+1,20250727_110149,Initial backup version,versions\v1_20250727_110149.html
+2,20250727_110410,Clean version from backup (base for restoration),versions\v2_20250727_110410.html
+3,20250727_110656,Before PWA enhancements,versions\v3_20250727_110656.html
+4,20250727_110912,Added PWA support (meta tags, service worker registration, and offline capabilities),versions\v4_20250727_110912.html
+5,20250727_111518,Before UI/UX and session management enhancements,versions\v5_20250727_111518.html
+v6,_20250727_11521,Moved export buttons below session history and fixed HTML export
+7,20250727_115438,Fixed version control script to properly handle version numbering,versions\v7_20250727_115438.html
+8,20250727_123055,Before implementing new session history design,versions\v8_20250727_123055.html
+9,20250727_133727,v9 - Implemented Model 2 session history with multiline layout and styled start/end markers,versions\v9_20250727_133727.html
+10,20250727_144917,v9.1 - Added consistent spacing after all exercises in session history,versions\v10_20250727_144917.html
+11,20250727_162048,Added seconds to time display and enhanced exports with session boundaries,versions\v11_20250727_162048.html
+12,20250729_141021,v12 - Improved button layouts: aligned +Execução button with counter, fixed button styles and spacing,versions\v12_20250729_141021.html
+13,20250729_172400,v13 - Fixed [object Object] display issue in exercise history and improved data handling,versions\v13_20250729_172400.html
+14,20250729_173920,v14 - Test version with improved version control script,versions\v14_20250729_173920.html
+15,20250729_202200,v15 - Fixed version control script to handle non-numeric version numbers and ensure proper version file creation,versions\v15_20250729_202200.html
+16,20250729_210215,v16 - Added collapsible exercise list with persistent state,versions\v16_20250729_210215.html
+17,20250729_210517,v17 - Added weekly and monthly workout stats,versions\v17_20250729_210517.html
+18,20250729_215336,v18 - Ensure weekly/monthly counts are independent per session and first session starts at 1,versions\v18_20250729_215336.html
+19,20250729_220921,v19 - Add dashboard to exported HTML: Active Days, Number of Exercises, Hours Working Out,versions\v19_20250729_220921.html
+20,20250729_222857,v20 - Fixed offline issue,versions\v20_20250729_222857.html
+21,20250729_231222,v21 - Reorder session history: days descending, exercises ascending within day,versions\v21_20250729_231222.html
+22,20250730_193643,v22 - Fixed first session weekly/monthly count to always start at 1,versions\v22_20250730_193643.html
+23,20250730_203521,v23 - Improved exercise deletion with clear confirmation messages and proper session handling,versions\v23_20250730_203521.html
